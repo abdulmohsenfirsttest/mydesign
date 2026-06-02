@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
+
+type Attachment = { name: string; size: string };
+type Message = { sender: string; text: string; time: string; me: boolean; attachments?: Attachment[] };
 
 const threads = [
   {
@@ -9,7 +12,7 @@ const threads = [
       { sender: "Sara (Team)", text: "Good morning! The 3D renders for the living room are ready for review. We've prepared 3 different lighting options.", time: "10:02 AM", me: true },
       { sender: "Ahmed Al-Rashid", text: "Thank you Sara! I'll take a look today and share feedback.", time: "11:30 AM", me: false },
       { sender: "Sara (Team)", text: "Also, we need to confirm the marble selection by end of week for the contractor.", time: "12:45 PM", me: true },
-    ],
+    ] as Message[],
   },
   {
     id: 2, client: "Nora Al-Ghamdi", project: "Jewelry Store — Riyadh Gallery", time: "5h ago", unread: 0,
@@ -17,20 +20,56 @@ const threads = [
     messages: [
       { sender: "Omar (Team)", text: "Hi Nora! The final design package has been sent for e-signature. Please check the Financial section.", time: "9:00 AM", me: true },
       { sender: "Nora Al-Ghamdi", text: "Got it. I'll review and sign today.", time: "2:00 PM", me: false },
-    ],
+    ] as Message[],
   },
   {
     id: 3, client: "Faisal Al-Otaibi", project: "Corporate Office — NEOM", time: "1d ago", unread: 0,
     preview: "Could you confirm the headcount and department breakdown?",
     messages: [
       { sender: "Reem (Team)", text: "To start the space planning, could you share the headcount by department?", time: "Yesterday", me: true },
-    ],
+    ] as Message[],
   },
 ];
+
+function PaperclipIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+    </svg>
+  );
+}
+
+function FileChip({ name, onRemove }: { name: string; onRemove: () => void }) {
+  return (
+    <div className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 px-2.5 py-1 text-xs text-white/50 max-w-[160px]"
+      style={{ fontFamily: "var(--font-inter)" }}>
+      <span className="truncate">{name}</span>
+      <button onClick={onRemove} className="text-white/30 hover:text-white/70 flex-shrink-0 leading-none">×</button>
+    </div>
+  );
+}
 
 export default function AdminMessagesPage() {
   const [selected, setSelected] = useState(threads[0]);
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function handleFiles(files: FileList | null) {
+    if (!files) return;
+    setAttachments(prev => [...prev, ...Array.from(files)]);
+  }
+
+  function removeAttachment(i: number) {
+    setAttachments(prev => prev.filter((_, idx) => idx !== i));
+  }
+
+  function handleSend() {
+    if (!input.trim() && attachments.length === 0) return;
+    setInput("");
+    setAttachments([]);
+  }
 
   return (
     <div className="flex h-screen">
@@ -61,23 +100,53 @@ export default function AdminMessagesPage() {
           <p className="text-white text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selected.client}</p>
           <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{selected.project}</p>
         </div>
+
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
           {selected.messages.map((m, i) => (
             <div key={i} className={`flex ${m.me ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-sm px-4 py-3 ${m.me ? "bg-white text-black" : "border border-white/[0.08] bg-[#161616] text-white/70"}`}>
                 {!m.me && <p className="text-white/40 text-xs mb-1" style={{ fontFamily: "var(--font-inter)" }}>{m.sender}</p>}
                 <p className="text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{m.text}</p>
+                {m.attachments && m.attachments.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {m.attachments.map((a, j) => (
+                      <div key={j} className={`flex items-center gap-2 text-xs px-2.5 py-1.5 border ${m.me ? "border-black/20 bg-black/5 text-black/60" : "border-white/10 bg-white/[0.03] text-white/40"}`}
+                        style={{ fontFamily: "var(--font-inter)" }}>
+                        <PaperclipIcon />
+                        <span className="truncate">{a.name}</span>
+                        <span className="flex-shrink-0 opacity-60">{a.size}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p className={`text-xs mt-1 ${m.me ? "text-black/40" : "text-white/20"}`} style={{ fontFamily: "var(--font-inter)" }}>{m.time}</p>
               </div>
             </div>
           ))}
         </div>
+
+        {/* Attachment preview row */}
+        {attachments.length > 0 && (
+          <div className="px-6 pt-3 flex flex-wrap gap-2 border-t border-white/[0.06]">
+            {attachments.map((f, i) => (
+              <FileChip key={i} name={f.name} onRemove={() => removeAttachment(i)} />
+            ))}
+          </div>
+        )}
+
         <div className="px-6 py-4 border-t border-white/[0.06] flex gap-3">
+          <input ref={fileRef} type="file" multiple className="hidden" onChange={e => handleFiles(e.target.files)} />
+          <button onClick={() => fileRef.current?.click()}
+            className="text-white/30 hover:text-white/70 transition-colors flex-shrink-0 self-center"
+            title="Attach file">
+            <PaperclipIcon />
+          </button>
           <input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
             placeholder="Reply to client..."
             className="flex-1 bg-transparent border border-white/20 text-white text-sm px-4 py-2.5 focus:outline-none focus:border-white/40 transition-colors placeholder-white/20"
             style={{ fontFamily: "var(--font-inter)" }} />
-          <button onClick={() => setInput("")} disabled={!input}
+          <button onClick={handleSend} disabled={!input.trim() && attachments.length === 0}
             className="px-5 py-2.5 border border-white text-white text-xs hover:bg-white hover:text-black transition-colors disabled:opacity-30"
             style={{ fontFamily: "var(--font-inter)" }}>Send</button>
         </div>
