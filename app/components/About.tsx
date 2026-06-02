@@ -1,15 +1,12 @@
-import Image from "next/image";
-
 export default function About() {
   return (
     <section id="about" className="bg-[#0a0a0a]">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2">
-        <div className="relative h-80 lg:h-auto min-h-[420px]">
-          <Image
+        <div className="relative min-h-[420px]">
+          <img
             src="/photos/about.png"
             alt="Our team at work"
-            fill
-            className="object-cover object-top"
+            className="absolute inset-0 w-full h-full object-cover object-top"
           />
         </div>
         <div className="px-10 py-16 lg:px-16 lg:py-20 flex flex-col justify-center">

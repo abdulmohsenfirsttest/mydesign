@@ -1,14 +1,10 @@
-import Image from "next/image";
-
 export default function Hero() {
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden">
-      <Image
+      <img
         src="/photos/hero.png"
         alt="Architecture interior"
-        fill
-        className="object-cover object-top"
-        priority
+        className="absolute inset-0 w-full h-full object-cover object-top"
       />
       <div className="absolute inset-0 bg-black/55" />
       <div className="absolute inset-0 flex items-end pb-20 px-10 md:px-16">

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -68,11 +67,10 @@ export default function ProjectsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
                   {project.images.map((src, i) => (
                     <div key={i} className="relative aspect-video overflow-hidden">
-                      <Image
+                      <img
                         src={src}
                         alt={`${project.title} photo ${i + 1}`}
-                        fill
-                        className="object-cover object-top hover:scale-105 transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                   ))}

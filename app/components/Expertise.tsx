@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const categories = [
   { label: "Education",    photo: "/photos/expertise1.png" },
   { label: "Hospitality",  photo: "/photos/expertise1.png" },
@@ -22,11 +20,10 @@ export default function Expertise() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
           {categories.map((cat, i) => (
             <div key={cat.label} className="relative aspect-square group overflow-hidden">
-              <Image
+              <img
                 src={cat.photo}
                 alt={cat.label}
-                fill
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/45 group-hover:bg-black/25 transition-colors" />
               <div className="absolute bottom-0 left-0 p-4">

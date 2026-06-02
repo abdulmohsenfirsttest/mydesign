@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 const services = [
   "Designing",
   "3D Modeling",
@@ -41,11 +39,10 @@ export default function Services() {
             </div>
           </div>
           <div className="relative min-h-[340px]">
-            <Image
+            <img
               src="/photos/services.png"
               alt="Our services"
-              fill
-              className="object-cover object-center"
+              className="absolute inset-0 w-full h-full object-cover object-center"
             />
           </div>
         </div>
