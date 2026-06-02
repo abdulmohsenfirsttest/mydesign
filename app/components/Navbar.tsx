@@ -55,13 +55,22 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Link
-          href="/book"
-          className="hidden md:inline-block px-5 py-2 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors"
-          style={{ fontFamily: "var(--font-inter)" }}
-        >
-          Book Now
-        </Link>
+        <div className="hidden md:flex items-center gap-3">
+          <Link
+            href="/auth/login"
+            className="text-sm text-white/50 hover:text-white transition-colors"
+            style={{ fontFamily: "var(--font-inter)" }}
+          >
+            Client Login
+          </Link>
+          <Link
+            href="/book"
+            className="px-5 py-2 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors"
+            style={{ fontFamily: "var(--font-inter)" }}
+          >
+            Book Now
+          </Link>
+        </div>
       </div>
     </header>
   );
