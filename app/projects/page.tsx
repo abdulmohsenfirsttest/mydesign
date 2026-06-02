@@ -8,12 +8,12 @@ const projects = [
     description:
       "Share information on a previous project here to attract new clients. Provide a brief summary to help visitors understand the context and background of your work.",
     images: [
-      { seed: "proj1a", w: 800, h: 500 },
-      { seed: "proj1b", w: 800, h: 500 },
-      { seed: "proj1c", w: 800, h: 500 },
-      { seed: "proj1d", w: 800, h: 500 },
-      { seed: "proj1e", w: 800, h: 500 },
-      { seed: "proj1f", w: 800, h: 500 },
+      "/photos/project1.png",
+      "/photos/project2.png",
+      "/photos/project1.png",
+      "/photos/project2.png",
+      "/photos/project1.png",
+      "/photos/project2.png",
     ],
   },
   {
@@ -21,12 +21,12 @@ const projects = [
     description:
       "Share information on a previous project here to attract new clients. Provide a brief summary to help visitors understand the context and background of your work.",
     images: [
-      { seed: "proj2a", w: 800, h: 500 },
-      { seed: "proj2b", w: 800, h: 500 },
-      { seed: "proj2c", w: 800, h: 500 },
-      { seed: "proj2d", w: 800, h: 500 },
-      { seed: "proj2e", w: 800, h: 500 },
-      { seed: "proj2f", w: 800, h: 500 },
+      "/photos/project3.png",
+      "/photos/project4.png",
+      "/photos/project3.png",
+      "/photos/project4.png",
+      "/photos/project3.png",
+      "/photos/project4.png",
     ],
   },
 ];
@@ -66,13 +66,13 @@ export default function ProjectsPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-1">
-                  {project.images.map((img, i) => (
+                  {project.images.map((src, i) => (
                     <div key={i} className="relative aspect-video overflow-hidden">
                       <Image
-                        src={`https://picsum.photos/seed/${img.seed}/${img.w}/${img.h}`}
+                        src={src}
                         alt={`${project.title} photo ${i + 1}`}
                         fill
-                        className="object-cover hover:scale-105 transition-transform duration-500"
+                        className="object-cover object-top hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                   ))}

@@ -1,12 +1,12 @@
 import Image from "next/image";
 
 const categories = [
-  { label: "Education",    seed: "edu1" },
-  { label: "Hospitality",  seed: "hotel1" },
-  { label: "Art & Culture",seed: "art1" },
-  { label: "Real Estate",  seed: "realestate1" },
-  { label: "Commercial",   seed: "commercial1" },
-  { label: "Offices",      seed: "office1" },
+  { label: "Education",    photo: "/photos/expertise1.png" },
+  { label: "Hospitality",  photo: "/photos/expertise1.png" },
+  { label: "Art & Culture",photo: "/photos/expertise2.png" },
+  { label: "Real Estate",  photo: "/photos/expertise2.png" },
+  { label: "Commercial",   photo: "/photos/expertise3.png" },
+  { label: "Offices",      photo: "/photos/expertise3.png" },
 ];
 
 export default function Expertise() {
@@ -23,12 +23,12 @@ export default function Expertise() {
           {categories.map((cat, i) => (
             <div key={cat.label} className="relative aspect-square group overflow-hidden">
               <Image
-                src={`https://picsum.photos/seed/${cat.seed}/600/600`}
+                src={cat.photo}
                 alt={cat.label}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+              <div className="absolute inset-0 bg-black/45 group-hover:bg-black/25 transition-colors" />
               <div className="absolute bottom-0 left-0 p-4">
                 <span className="block text-white/40 text-xs mb-1" style={{ fontFamily: "var(--font-inter)" }}>
                   0{i + 1}

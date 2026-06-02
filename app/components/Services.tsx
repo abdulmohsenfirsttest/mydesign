@@ -42,10 +42,10 @@ export default function Services() {
           </div>
           <div className="relative min-h-[340px]">
             <Image
-              src="https://picsum.photos/seed/interior1/800/600"
+              src="/photos/services.png"
               alt="Our services"
               fill
-              className="object-cover"
+              className="object-cover object-center"
             />
           </div>
         </div>

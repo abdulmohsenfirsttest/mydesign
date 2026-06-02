@@ -6,10 +6,10 @@ export default function About() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2">
         <div className="relative h-80 lg:h-auto min-h-[420px]">
           <Image
-            src="https://picsum.photos/seed/construct1/800/600"
+            src="/photos/about.png"
             alt="Our team at work"
             fill
-            className="object-cover"
+            className="object-cover object-top"
           />
         </div>
         <div className="px-10 py-16 lg:px-16 lg:py-20 flex flex-col justify-center">
