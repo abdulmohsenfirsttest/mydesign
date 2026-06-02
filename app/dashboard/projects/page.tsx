@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 const projects = [
-  { id: "1", name: "Villa Interior — Al Nakheel District", type: "Interior Design", stage: "Design", progress: 65, started: "Mar 2026", status: "In Progress" },
-  { id: "2", name: "Jewelry Store — Riyadh Gallery Mall", type: "Commercial", stage: "Approval", progress: 80, started: "Jan 2026", status: "Awaiting Approval" },
-  { id: "3", name: "Corporate Office — NEOM", type: "Office Design", stage: "Discovery", progress: 20, started: "May 2026", status: "In Progress" },
+  { id: "1", name: "Villa Interior — Al Nakheel District", type: "Interior Design", stage: "3D", progress: 57, started: "Mar 2026", status: "In Progress" },
+  { id: "2", name: "Jewelry Store — Riyadh Gallery Mall", type: "Commercial", stage: "Plans", progress: 71, started: "Jan 2026", status: "Awaiting Approval" },
+  { id: "3", name: "Corporate Office — NEOM", type: "Office Design", stage: "Quotation", progress: 14, started: "May 2026", status: "In Progress" },
 ];
 
-const stages = ["Discovery", "Design", "Approval", "Execution", "Handover"];
+const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
 
 export default function ProjectsPage() {
   return (

@@ -1,11 +1,11 @@
 const projects = [
-  { name: "Villa Interior — Al Nakheel", client: "Ahmed Al-Rashid", type: "Interior", stage: "Design", progress: 65, started: "Mar 2026", budget: "SAR 420K" },
-  { name: "Jewelry Store — Riyadh Gallery", client: "Nora Al-Ghamdi", type: "Commercial", stage: "Approval", progress: 80, started: "Jan 2026", budget: "SAR 285K" },
-  { name: "Corporate Office — NEOM", client: "Faisal Al-Otaibi", type: "Office", stage: "Discovery", progress: 20, started: "May 2026", budget: "SAR 680K" },
-  { name: "Private Residence — Jeddah", client: "Reem Al-Dosari", type: "Interior", stage: "Execution", progress: 90, started: "Nov 2025", budget: "SAR 310K" },
+  { name: "Villa Interior — Al Nakheel", client: "Ahmed Al-Rashid", type: "Interior", stage: "3D", progress: 57, started: "Mar 2026", budget: "SAR 420K" },
+  { name: "Jewelry Store — Riyadh Gallery", client: "Nora Al-Ghamdi", type: "Commercial", stage: "Plans", progress: 71, started: "Jan 2026", budget: "SAR 285K" },
+  { name: "Corporate Office — NEOM", client: "Faisal Al-Otaibi", type: "Office", stage: "Quotation", progress: 14, started: "May 2026", budget: "SAR 680K" },
+  { name: "Private Residence — Jeddah", client: "Reem Al-Dosari", type: "Interior", stage: "Payment", progress: 86, started: "Nov 2025", budget: "SAR 310K" },
 ];
 
-const stages = ["Discovery", "Design", "Approval", "Execution", "Handover"];
+const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
 
 export default function AdminProjectsPage() {
   return (
