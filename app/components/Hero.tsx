@@ -2,7 +2,7 @@ export default function Hero() {
   return (
     <section id="home" className="relative h-screen w-full overflow-hidden">
       <img
-        src="/photos/hero.png"
+        src="/photos/hero.jpg"
         alt="Architecture interior"
         className="absolute inset-0 w-full h-full object-cover object-top"
       />

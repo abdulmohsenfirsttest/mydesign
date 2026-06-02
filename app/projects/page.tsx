@@ -5,27 +5,27 @@ const projects = [
   {
     title: "Prince Mohammad Bin Salman Global Center for Arabic Calligraphy (Dar Al-Qalam)",
     description:
-      "Share information on a previous project here to attract new clients. Provide a brief summary to help visitors understand the context and background of your work.",
+      "A landmark cultural institution in Riyadh designed to celebrate Arabic calligraphy as an art form. The project blends contemporary architecture with deep cultural heritage.",
     images: [
-      "/photos/project1.png",
-      "/photos/project2.png",
-      "/photos/project1.png",
-      "/photos/project2.png",
-      "/photos/project1.png",
-      "/photos/project2.png",
+      "/photos/project1.jpg",
+      "/photos/project2.jpg",
+      "/photos/project3.jpg",
+      "/photos/project4.jpg",
+      "/photos/project1.jpg",
+      "/photos/project2.jpg",
     ],
   },
   {
     title: "The Jefferson's Lake House",
     description:
-      "Share information on a previous project here to attract new clients. Provide a brief summary to help visitors understand the context and background of your work.",
+      "A private lakeside residence that merges natural materials with modern design. Floor-to-ceiling glazing, warm timber, and open-plan living create a seamless indoor-outdoor experience.",
     images: [
-      "/photos/project3.png",
-      "/photos/project4.png",
-      "/photos/project3.png",
-      "/photos/project4.png",
-      "/photos/project3.png",
-      "/photos/project4.png",
+      "/photos/project3.jpg",
+      "/photos/project4.jpg",
+      "/photos/project1.jpg",
+      "/photos/project2.jpg",
+      "/photos/project3.jpg",
+      "/photos/project4.jpg",
     ],
   },
 ];
@@ -43,7 +43,7 @@ export default function ProjectsPage() {
             Our Projects
           </h1>
           <p className="text-white/40 max-w-lg mb-16 text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
-            This is the space to introduce your Projects section. Take this opportunity to give visitors a brief overview of the types of projects they&apos;ll find featured in the showcase below.
+            A selection of completed works spanning cultural institutions, residential design, hospitality, and commercial developments across the Kingdom.
           </p>
 
           <div className="space-y-20">
@@ -70,7 +70,7 @@ export default function ProjectsPage() {
                       <img
                         src={src}
                         alt={`${project.title} photo ${i + 1}`}
-                        className="absolute inset-0 w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
                       />
                     </div>
                   ))}

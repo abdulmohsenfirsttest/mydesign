@@ -4,7 +4,7 @@ export default function About() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2">
         <div className="relative min-h-[420px]">
           <img
-            src="/photos/about.png"
+            src="/photos/about.jpg"
             alt="Our team at work"
             className="absolute inset-0 w-full h-full object-cover object-top"
           />

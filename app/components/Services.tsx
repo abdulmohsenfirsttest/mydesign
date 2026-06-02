@@ -40,7 +40,7 @@ export default function Services() {
           </div>
           <div className="relative min-h-[340px]">
             <img
-              src="/photos/services.png"
+              src="/photos/services.jpg"
               alt="Our services"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />

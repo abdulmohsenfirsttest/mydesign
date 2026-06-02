@@ -1,10 +1,10 @@
 const categories = [
-  { label: "Education",    photo: "/photos/expertise1.png" },
-  { label: "Hospitality",  photo: "/photos/expertise1.png" },
-  { label: "Art & Culture",photo: "/photos/expertise2.png" },
-  { label: "Real Estate",  photo: "/photos/expertise2.png" },
-  { label: "Commercial",   photo: "/photos/expertise3.png" },
-  { label: "Offices",      photo: "/photos/expertise3.png" },
+  { label: "Education",    photo: "/photos/exp-education.jpg" },
+  { label: "Hospitality",  photo: "/photos/exp-hospitality.jpg" },
+  { label: "Art & Culture",photo: "/photos/exp-art.jpg" },
+  { label: "Real Estate",  photo: "/photos/exp-realestate.jpg" },
+  { label: "Commercial",   photo: "/photos/exp-commercial.jpg" },
+  { label: "Offices",      photo: "/photos/exp-offices.jpg" },
 ];
 
 export default function Expertise() {
