@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { supabase } from "@/lib/supabase";
 
 const times = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
 const services = ["Interior Design Consultation", "3D Modeling & Visualization", "Renovation Planning", "Construction Management", "Full Project Design"];
@@ -20,9 +21,17 @@ export default function BookPage() {
   const [step, setStep] = useState(1);
   const [booked, setBooked] = useState(false);
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
 
-  function handleBook(e: React.FormEvent) {
+  async function handleBook(e: React.FormEvent) {
     e.preventDefault();
+    await supabase.from("bookings").insert({
+      name, phone, email,
+      service: selectedService,
+      date: selectedDay,
+      time: selectedTime,
+    });
     setBooked(true);
   }
 
@@ -126,10 +135,12 @@ export default function BookPage() {
                     </div>
                   </div>
                   <form onSubmit={handleBook} className="space-y-3">
-                    <input type="text" required placeholder="Your name"
+                    <input type="text" required placeholder="Your name" value={name}
+                      onChange={e => setName(e.target.value)}
                       className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
                       style={{ fontFamily: "var(--font-inter)" }} />
-                    <input type="email" required placeholder="Email"
+                    <input type="email" required placeholder="Email" value={email}
+                      onChange={e => setEmail(e.target.value)}
                       className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
                       style={{ fontFamily: "var(--font-inter)" }} />
                     <input type="tel" required placeholder="Phone / WhatsApp" value={phone}

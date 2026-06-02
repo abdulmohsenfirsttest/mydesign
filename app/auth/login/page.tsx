@@ -2,6 +2,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const countryCodes = [
   { code: "+966", flag: "🇸🇦" },
@@ -23,15 +24,28 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (password !== "123123") {
-      setError("Incorrect password. Please try again.");
+    setLoading(true);
+
+    const fullPhone = `${countryCode.code}${phone}`;
+    const { data, error: dbError } = await supabase
+      .from("clients")
+      .select("id, name")
+      .eq("phone", fullPhone)
+      .eq("password", password)
+      .single();
+
+    if (dbError || !data) {
+      setError("Incorrect phone number or password.");
+      setLoading(false);
       return;
     }
-    setLoading(true);
-    setTimeout(() => router.push("/dashboard"), 700);
+
+    localStorage.setItem("client_id", data.id);
+    localStorage.setItem("client_name", data.name);
+    router.push("/dashboard");
   }
 
   return (
@@ -77,9 +91,7 @@ function LoginForm() {
               style={{ fontFamily: "var(--font-inter)" }} />
           </div>
 
-          {error && (
-            <p className="text-red-400/70 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>
-          )}
+          {error && <p className="text-red-400/70 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>}
 
           <button type="submit" disabled={loading || phone.length < 8 || !password}
             className="w-full py-3 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30"
@@ -93,9 +105,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginForm />
-    </Suspense>
-  );
+  return <Suspense><LoginForm /></Suspense>;
 }
