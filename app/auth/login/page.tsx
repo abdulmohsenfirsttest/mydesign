@@ -1,7 +1,7 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const countryCodes = [
   { code: "+966", flag: "🇸🇦", label: "SA" },
@@ -14,8 +14,9 @@ const countryCodes = [
   { code: "+44",  flag: "🇬🇧", label: "GB" },
 ];
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<"phone" | "otp">("phone");
   const [countryCode, setCountryCode] = useState(countryCodes[0]);
   const [phone, setPhone] = useState("");
@@ -23,6 +24,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [resent, setResent] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    const p = searchParams.get("phone");
+    if (p) setPhone(p.replace(/\D/g, ""));
+  }, [searchParams]);
 
   function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -73,7 +79,6 @@ export default function LoginPage() {
           <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>
             We sent a 6-digit code to {countryCode.code} {phone}
           </p>
-
           <form onSubmit={handleVerify} className="space-y-8">
             <div className="flex gap-3">
               {otp.map((digit, i) => (
@@ -86,18 +91,14 @@ export default function LoginPage() {
                   style={{ fontFamily: "var(--font-inter)" }} />
               ))}
             </div>
-
             <button type="submit" disabled={loading || otp.some(d => !d)}
               className="w-full py-3 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30"
               style={{ fontFamily: "var(--font-inter)" }}>
-              {loading ? "Verifying..." : "Verify & Sign In"}
+              {loading ? "Verifying..." : "Verify & Enter Portal"}
             </button>
           </form>
-
           <div className="mt-6 flex items-center justify-between text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-            <button onClick={() => setStep("phone")} className="text-white/30 hover:text-white/60 transition-colors">
-              ← Change number
-            </button>
+            <button onClick={() => setStep("phone")} className="text-white/30 hover:text-white/60 transition-colors">← Change number</button>
             <button onClick={handleResend} className="text-white/30 hover:text-white/60 transition-colors">
               {resent ? "✓ Code resent" : "Resend code"}
             </button>
@@ -111,23 +112,20 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Logo />
-        <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Client portal</h1>
-        <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Enter your phone number to receive a sign-in code.</p>
-
+        <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Client Portal</h1>
+        <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>
+          Enter your phone number to receive a sign-in code.
+        </p>
         <form onSubmit={handleSendCode} className="space-y-4">
           <div>
             <label className="block text-xs text-white/40 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone Number</label>
-            <div className="flex gap-0">
-              {/* Country code picker */}
+            <div className="flex">
               <div className="relative">
-                <select
-                  value={countryCode.code}
+                <select value={countryCode.code}
                   onChange={e => setCountryCode(countryCodes.find(c => c.code === e.target.value) ?? countryCodes[0])}
                   className="appearance-none bg-[#1a1a1a] border border-white/20 border-r-0 text-white/70 text-sm pl-3 pr-7 py-3 focus:outline-none focus:border-white/50 cursor-pointer h-full"
                   style={{ fontFamily: "var(--font-inter)" }}>
-                  {countryCodes.map(c => (
-                    <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
-                  ))}
+                  {countryCodes.map(c => <option key={c.code} value={c.code}>{c.flag} {c.code}</option>)}
                 </select>
                 <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -139,18 +137,24 @@ export default function LoginPage() {
                 style={{ fontFamily: "var(--font-inter)" }} />
             </div>
           </div>
-
           <button type="submit" disabled={loading || phone.length < 8}
             className="w-full py-3 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30"
             style={{ fontFamily: "var(--font-inter)" }}>
             {loading ? "Sending..." : "Send Code"}
           </button>
         </form>
-
         <p className="mt-8 text-center text-white/20 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
-          By continuing, you agree to receive an SMS verification code.<br />Standard messaging rates may apply.
+          By continuing, you agree to receive an SMS verification code.
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

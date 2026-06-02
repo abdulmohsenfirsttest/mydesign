@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -18,6 +19,7 @@ export default function BookPage() {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [step, setStep] = useState(1);
   const [booked, setBooked] = useState(false);
+  const [phone, setPhone] = useState("");
 
   function handleBook(e: React.FormEvent) {
     e.preventDefault();
@@ -36,16 +38,27 @@ export default function BookPage() {
           </p>
 
           {booked ? (
-            <div className="border border-white/10 p-12 text-center">
+            <div className="border border-white/10 p-12 text-center max-w-lg mx-auto">
               <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-6">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <h2 className="text-2xl text-white mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Appointment Confirmed</h2>
-              <p className="text-white/40 text-sm mb-2" style={{ fontFamily: "var(--font-inter)" }}>{selectedService}</p>
+              <p className="text-white/40 text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>{selectedService}</p>
               <p className="text-white/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selectedDay} at {selectedTime}</p>
-              <p className="text-white/30 text-xs mt-6" style={{ fontFamily: "var(--font-inter)" }}>A confirmation has been sent to your email and WhatsApp.</p>
+              <div className="border-t border-white/[0.08] mt-8 pt-8">
+                <p className="text-white/50 text-sm mb-2" style={{ fontFamily: "var(--font-inter)" }}>Your client portal is ready.</p>
+                <p className="text-white/25 text-xs mb-6" style={{ fontFamily: "var(--font-inter)" }}>
+                  Track your project, review meeting notes, access files, and approve deliverables — all in one place.
+                </p>
+                <Link
+                  href={`/auth/login?phone=${encodeURIComponent(phone)}`}
+                  className="inline-block px-8 py-3 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+                  style={{ fontFamily: "var(--font-inter)" }}>
+                  Access Your Portal →
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -119,7 +132,8 @@ export default function BookPage() {
                     <input type="email" required placeholder="Email"
                       className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
                       style={{ fontFamily: "var(--font-inter)" }} />
-                    <input type="tel" required placeholder="Phone / WhatsApp"
+                    <input type="tel" required placeholder="Phone / WhatsApp" value={phone}
+                      onChange={e => setPhone(e.target.value)}
                       className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
                       style={{ fontFamily: "var(--font-inter)" }} />
                     <button type="submit" disabled={!selectedService || !selectedDay || !selectedTime}
