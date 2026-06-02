@@ -56,11 +56,11 @@ export default function Navbar() {
         </nav>
 
         <Link
-          href="/#contact"
+          href="/book"
           className="hidden md:inline-block px-5 py-2 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors"
           style={{ fontFamily: "var(--font-inter)" }}
         >
-          Call Now
+          Book Now
         </Link>
       </div>
     </header>
