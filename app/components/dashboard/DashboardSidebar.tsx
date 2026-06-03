@@ -1,6 +1,7 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { href: "/dashboard", label: "Overview", icon: (
@@ -25,6 +26,18 @@ const nav = [
 
 export default function DashboardSidebar() {
   const path = usePathname();
+  const router = useRouter();
+  const [clientName, setClientName] = useState("");
+
+  useEffect(() => {
+    setClientName(localStorage.getItem("client_name") ?? "Client");
+  }, []);
+
+  function signOut() {
+    localStorage.removeItem("client_id");
+    localStorage.removeItem("client_name");
+    router.push("/auth/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-56 bg-[#111] border-r border-white/[0.06] flex flex-col z-40">
@@ -55,14 +68,14 @@ export default function DashboardSidebar() {
         <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
           <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-medium" style={{ fontFamily: "var(--font-inter)" }}>A</div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>Ahmed Al-Rashid</p>
+            <p className="text-white text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{clientName}</p>
             <p className="text-white/30 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>Client</p>
           </div>
         </div>
-        <Link href="/" className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white/60 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
+        <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white/60 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
           Sign out
-        </Link>
+        </button>
       </div>
     </aside>
   );

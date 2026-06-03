@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const nav = [
   { href: "/admin", label: "Overview", icon: (
@@ -28,6 +28,12 @@ const nav = [
 
 export default function AdminSidebar() {
   const path = usePathname();
+  const router = useRouter();
+
+  function signOut() {
+    localStorage.removeItem("admin_session");
+    router.push("/admin/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 bottom-0 w-56 bg-[#0f0f0f] border-r border-white/[0.06] flex flex-col z-40">
@@ -63,10 +69,10 @@ export default function AdminSidebar() {
             <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Owner</p>
           </div>
         </div>
-        <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white/60 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-          Client View
-        </Link>
+        <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white/60 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Sign out
+        </button>
       </div>
     </aside>
   );
