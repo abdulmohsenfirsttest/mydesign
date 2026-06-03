@@ -26,12 +26,10 @@ export default function BookPage() {
 
   async function handleBook(e: React.FormEvent) {
     e.preventDefault();
-    await supabase.from("bookings").insert({
-      name, phone, email,
-      service: selectedService,
-      date: selectedDay,
-      time: selectedTime,
-    });
+    await Promise.all([
+      supabase.from("bookings").insert({ name, phone, email, service: selectedService, date: selectedDay, time: selectedTime }),
+      supabase.from("clients").upsert({ name, phone, email, password: "123123" }, { onConflict: "phone", ignoreDuplicates: true }),
+    ]);
     setBooked(true);
   }
 
