@@ -1,14 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
-const existingQuotes = [
-  { id: "Q-1042", client: "Nora Al-Ghamdi", project: "Jewelry Store — Riyadh Gallery", amount: "SAR 285,000", status: "Pending Signature", date: "Jun 2, 2026" },
-  { id: "Q-1031", client: "Ahmed Al-Rashid", project: "Villa Interior — Al Nakheel", amount: "SAR 420,000", status: "Signed", date: "Mar 5, 2026" },
-  { id: "Q-1038", client: "Faisal Al-Otaibi", project: "Corporate Office — NEOM", amount: "SAR 680,000", status: "Draft", date: "May 20, 2026" },
-];
-
-const clients = ["Ahmed Al-Rashid", "Nora Al-Ghamdi", "Faisal Al-Otaibi", "Reem Al-Dosari"];
-const projects = ["Villa Interior — Al Nakheel", "Jewelry Store — Riyadh Gallery", "Corporate Office — NEOM", "Private Residence — Jeddah"];
+type Client = { id: string; name: string };
+type Project = { id: string; name: string; client_id: string };
 
 const statusStyle: Record<string, string> = {
   "Pending Signature": "border-white/40 text-white/60",
@@ -18,14 +13,25 @@ const statusStyle: Record<string, string> = {
 
 export default function QuotesPage() {
   const [showForm, setShowForm] = useState(false);
-  const [sent, setSent] = useState(false);
   const [lines, setLines] = useState([{ item: "", amount: "" }]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedClient, setSelectedClient] = useState("");
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    supabase.from("clients").select("id, name").then(({ data }) => setClients(data ?? []));
+    supabase.from("projects").select("id, name, client_id").then(({ data }) => setProjects(data ?? []));
+  }, []);
+
+  const filteredProjects = selectedClient ? projects.filter(p => p.client_id === selectedClient) : projects;
 
   function addLine() { setLines(l => [...l, { item: "", amount: "" }]); }
+
   function handleSend(e: React.FormEvent) {
     e.preventDefault();
     setSent(true);
-    setTimeout(() => { setSent(false); setShowForm(false); setLines([{ item: "", amount: "" }]); }, 2000);
+    setTimeout(() => { setSent(false); setShowForm(false); setLines([{ item: "", amount: "" }]); setSelectedClient(""); }, 2000);
   }
 
   return (
@@ -46,16 +52,17 @@ export default function QuotesPage() {
           <div className="grid grid-cols-2 gap-4 mb-5">
             <div>
               <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Client</label>
-              <select required className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-3 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)" }}>
+              <select required value={selectedClient} onChange={e => setSelectedClient(e.target.value)}
+                className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-3 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)" }}>
                 <option value="">Select client</option>
-                {clients.map(c => <option key={c}>{c}</option>)}
+                {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Project</label>
               <select required className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-3 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)" }}>
                 <option value="">Select project</option>
-                {projects.map(p => <option key={p}>{p}</option>)}
+                {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           </div>
@@ -65,12 +72,12 @@ export default function QuotesPage() {
             {lines.map((line, i) => (
               <div key={i} className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">
-                  <input required placeholder="Description (e.g. Interior Design Package)"
-                    value={line.item} onChange={e => { const l = [...lines]; l[i].item = e.target.value; setLines(l); }}
+                  <input required placeholder="Description" value={line.item}
+                    onChange={e => { const l = [...lines]; l[i].item = e.target.value; setLines(l); }}
                     className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20" style={{ fontFamily: "var(--font-inter)" }} />
                 </div>
-                <input required placeholder="SAR 0"
-                  value={line.amount} onChange={e => { const l = [...lines]; l[i].amount = e.target.value; setLines(l); }}
+                <input required placeholder="SAR 0" value={line.amount}
+                  onChange={e => { const l = [...lines]; l[i].amount = e.target.value; setLines(l); }}
                   className="bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20" style={{ fontFamily: "var(--font-inter)" }} />
               </div>
             ))}
@@ -86,25 +93,8 @@ export default function QuotesPage() {
         </form>
       )}
 
-      <div className="border border-white/[0.08] bg-[#161616]">
-        <div className="grid grid-cols-12 px-5 py-3 border-b border-white/[0.06] text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-          <span className="col-span-1">ID</span>
-          <span className="col-span-2">Client</span>
-          <span className="col-span-3">Project</span>
-          <span className="col-span-2">Amount</span>
-          <span className="col-span-2">Date</span>
-          <span className="col-span-2">Status</span>
-        </div>
-        {existingQuotes.map((q, i) => (
-          <div key={q.id} className={`grid grid-cols-12 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors ${i < existingQuotes.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
-            <span className="col-span-1 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{q.id}</span>
-            <span className="col-span-2 text-white/60 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{q.client}</span>
-            <span className="col-span-3 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{q.project}</span>
-            <span className="col-span-2 text-white/70 text-sm" style={{ fontFamily: "var(--font-playfair)" }}>{q.amount}</span>
-            <span className="col-span-2 text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{q.date}</span>
-            <span className={`col-span-2 text-xs px-2.5 py-1 border w-fit ${statusStyle[q.status]}`} style={{ fontFamily: "var(--font-inter)" }}>{q.status}</span>
-          </div>
-        ))}
+      <div className="border border-white/[0.08] bg-[#161616] p-10 text-center">
+        <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No quotes yet. Create one using the button above.</p>
       </div>
     </div>
   );
