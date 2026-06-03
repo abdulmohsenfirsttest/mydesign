@@ -7,6 +7,7 @@ type Booking = { id: string; date: string; time: string; name: string; email: st
 const statusStyle: Record<string, string> = {
   Confirmed: "border-white/20 text-white/50",
   Pending: "border-white/10 text-white/25",
+  Cancelled: "border-red-400/20 text-red-400/40",
 };
 
 export default function BookingsPage() {
@@ -17,6 +18,11 @@ export default function BookingsPage() {
     supabase.from("bookings").select("*").order("date").order("time")
       .then(({ data }) => { setBookings(data ?? []); setLoading(false); });
   }, []);
+
+  async function updateStatus(id: string, status: string) {
+    await supabase.from("bookings").update({ status }).eq("id", id);
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+  }
 
   return (
     <div className="p-8">
@@ -48,7 +54,13 @@ export default function BookingsPage() {
               <span className="col-span-2 text-white/60 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{b.name}</span>
               <span className="col-span-2 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{b.phone}</span>
               <span className="col-span-3 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{b.service}</span>
-              <span className={`col-span-2 text-xs px-2.5 py-1 border w-fit ${statusStyle[b.status] ?? statusStyle.Pending}`} style={{ fontFamily: "var(--font-inter)" }}>{b.status}</span>
+              <select value={b.status} onChange={e => updateStatus(b.id, e.target.value)}
+                className={`col-span-2 text-xs px-2.5 py-1 border bg-transparent cursor-pointer focus:outline-none ${statusStyle[b.status] ?? statusStyle.Pending}`}
+                style={{ fontFamily: "var(--font-inter)" }}>
+                <option value="Pending">Pending</option>
+                <option value="Confirmed">Confirmed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
             </div>
           ))}
         </div>
