@@ -8,20 +8,20 @@ This document covers the day-to-day health of the codebase: what the current sta
 
 ---
 
-## 1. Current health snapshot (2026-06-28)
+## 1. Current health snapshot (2026-06-29)
 
 | Check | Tool | Result | Notes |
 |---|---|---|---|
 | Build | `next build` | PASS | Compiles successfully. 23 routes. ~2.3s compile time. |
 | Types | `tsc --noEmit` | PASS | Exits clean, no type errors. |
-| Lint | `eslint` | FAIL | 3 errors, all in `app/admin/messages/page.tsx`. Listed in section 2. |
+| Lint | `eslint` | WARN-only in changed files | The 3 documented `app/admin/messages/page.tsx` errors are **cleared** (v3.3.0). Remaining errors are pre-existing in `app/dashboard/*` (set-state-in-effect, two `any`); CI lint stays in warn mode until those are fixed. |
 | Dependency audit | `npm audit` | 2 MODERATE | `postcss <8.5.10` (XSS via unescaped `</style>` in CSS stringify), pulled in transitively through Next.js's bundled postcss. Build-time only. Do NOT run `npm audit fix --force` (it downgrades Next to 9.x). |
 | Outdated deps | `npm outdated` | Safe patch bumps available | `next 16.2.7 → 16.2.9`, `@supabase/supabase-js 2.107 → 2.108.2`, `tailwindcss 4.3.0 → 4.3.1`, `eslint-config-next 16.2.7 → 16.2.9`, plus `@types/react` / `@types/node` patches. HOLD majors: `eslint 9 → 10`, `typescript 5 → 6`, `@types/node 20 → 26`. |
-| Version control | `git status` | DIRTY | Last commit `3af643c` (2026-06-03, v3.1.1). ~19 files / ~1,800 lines uncommitted (the v3.2.0 working set). `supabase/admins.sql` and `.backups/` untracked. This is the #1 health risk — see section 2. |
+| Version control | `git status` | CLEAN | Committed `7e3c7c8` (2026-06-29, tag `v3.3.0`), pushed to GitHub. v3.2.0 + Meeting-3 Increment 1 are now in git; production matches git. `.backups/` is now gitignored. The #1 health risk is closed. |
 | Tests | — | NONE | No test runner configured. Zero automated tests. |
 | CI | GitHub Actions | BEING ADDED | No CI before this session. A gate is added this session: typecheck + build blocking, lint in warn mode. See section 4. |
 
-Overall: the application compiles, type-checks, and runs in production. The two real problems are organizational, not functional — a large amount of deployed work is not committed to git, and there is no automated test or CI safety net (the latter is being fixed this session).
+Overall: the application compiles, type-checks, and runs in production. The deployed-but-uncommitted-work problem is now **resolved** (committed as `v3.3.0` / `7e3c7c8`). The remaining gaps are the absence of automated tests, a few pre-existing lint errors in `app/dashboard/*` (keeping CI lint in warn mode), and the still-pending security hardening tracked in SECURITY.md.
 
 ---
 
@@ -37,7 +37,9 @@ Overall: the application compiles, type-checks, and runs in production. The two 
 
 These are the **only** lint errors in the codebase. Clearing all three is the precondition for flipping CI lint from warn to blocking (section 4).
 
-### 2.2 Uncommitted-work risk (the #1 health risk)
+### 2.2 Uncommitted-work risk (the #1 health risk) — ✅ RESOLVED 2026-06-29
+
+**Resolved:** committed as `7e3c7c8` (tag `v3.3.0`) and pushed to GitHub; `.backups/` is now gitignored (it held plaintext credentials). The analysis below is kept for the record.
 
 The entire **v3.2.0** surface — quotes table + builder + quotes bucket, per-project milestones, the dedicated files page + files bucket, the meeting hub (file upload/download, client comments, approve/unapprove), Supabase Realtime live-sync across all admin pages, the `admins` table for phone-based admin login, and a local JSON account backup — is **deployed to production** (`vercel --prod`) but **not committed to git**. Last commit is `3af643c` from 2026-06-03; ~19 files / ~1,800 changed lines and the untracked `supabase/admins.sql` are sitting only in the working tree.
 

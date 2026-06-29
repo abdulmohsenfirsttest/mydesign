@@ -12,7 +12,8 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
-| v3.2.0 | 2026-06-03 → 2026-06-21 | MINOR — *in progress / pending commit* | Quotes, milestones, files & realtime expansion; deployed but not yet committed to git |
+| v3.3.0 | 2026-06-29 | MINOR | Meeting-3 Increment 1: 6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/` |
+| v3.2.0 | 2026-06-03 → 2026-06-21 | MINOR | Quotes, milestones, files & realtime expansion (committed 2026-06-29 with v3.3.0) |
 | v3.1.1 | 2026-06-03 | PATCH | Fix client login phone-matching; "+ Add to Clients" on bookings (last commit in git) |
 | v3.1.0 | 2026-06-03 | MINOR | Admin operations & auth: booking status, client creation, booking→client auto-register, /admin route protection |
 | v3.0.0 | 2026-06-03 | MAJOR | New era — Supabase backend replaces mock/localStorage data across portal + admin |
@@ -90,11 +91,17 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** None.
 - **Decision:** Normalize the phone comparison on login; keep booking→client promotion as an explicit one-click action in addition to the automatic path.
 
-### v3.2.0 · Quotes, milestones, files & realtime expansion *(in progress / pending commit)*
+### v3.2.0 · Quotes, milestones, files & realtime expansion
 - **What:** A large feature batch: a quotes table + quote builder + a `quotes` storage bucket; per-project milestones; a dedicated files page + a `files` storage bucket; a meeting "hub" with file upload/download, client comments, and approve/unapprove; Supabase Realtime live-sync across all admin pages; an `admins` table for phone-based admin login; and a local JSON account backup (`.backups/accounts-backup-20260621-153014.json`). Roughly 1,800 line changes across 19 files plus `supabase/admins.sql`.
 - **Why:** Bring the portal up to a usable operational standard — real quotes, real documents, live updates between owner and client, and admin login backed by a table rather than a hardcoded password.
 - **Schema:** Added the `quotes`, `milestones`, `files`, and `admins` tables, and the `files`, `meetings`, and `quotes` storage buckets (all PUBLIC). The pre-existing `meetings` table (created in v3.0.0) gained `client_comment` and `approved_at` columns. The `admins` table is defined in `supabase/admins.sql` — the only committed/tracked DDL in the repo. RLS is enabled on `admins` but with a permissive `select using (true)` policy; the owner row is seeded as name 'Owner', phone '0547080147'. All other tables have RLS DISABLED.
-- **Decision:** Deploy to production via `vercel --prod` to get the work in front of the client, but **do not commit to git yet** — this is the single largest deployed-but-unversioned surface and the #1 health risk. Status: in progress / pending commit. Committing it is Phase 1 of the security remediation.
+- **Decision:** Was deployed via `vercel --prod` but left uncommitted for ~3 weeks (the #1 health risk). **Committed 2026-06-29 as part of `7e3c7c8` (alongside v3.3.0)** — it shares files with the Meeting-3 increment, so the two could not be cleanly split. The deployed surface now matches git.
+
+### v3.3.0 · Meeting-3 Increment 1
+- **What:** First slice of the expanded Meeting-3 workflow: the canonical **6-service catalog** on `/book` (5 design + 1 management, the management service flagged as the Project-Management track) with the homepage `Services` list aligned to it; a new **SPACES** tab in the admin project hub (rooms + sqm, live total, realtime, delete); milestones now require a **Start and End date** (`start <= end`, with surfaced insert errors) rendered as a date range; and the first file-based migration starting the `migrations/` directory. Also cleared the 3 documented `app/admin/messages` lint errors and fixed a pre-existing UTC booking-date bug.
+- **Why:** Begin building Meeting 3 into the product, starting with the role-independent Phase-1 intake that doesn't depend on the still-open decisions.
+- **Schema:** New `spaces` table (FK → projects on delete cascade, `sqm numeric(10,2)`, RLS disabled to match siblings); `milestones.start_date`/`end_date` (nullable); `spaces` added to the realtime publication. Applied to prod as migration `meeting3_foundation` and tracked as `supabase/migrations/0001_meeting3_foundation.sql`.
+- **Decision:** MINOR — a faithful feature batch, not a new era. Roles, internal pricing, the proposal builder, bundling, and attachment-enforcement were **deferred** pending the owner's §6 decisions. Adopted the `migrations/` directory (advances ADR-0009).
 
 ---
 
@@ -110,8 +117,9 @@ v2.2.0  4c3257c → 94b303c → a6b3ec2 → accaf55
 v2.2.1  c0d91fa → fc6362a → 8388e16 → a9c23ce → 1ebc525
 v3.0.0  52d83b4 → d867265 → 8011ae3
 v3.1.0  ab1c97b → 4c60527 → 48a24c8 → 9a952a0
-v3.1.1  3af643c   (last commit in git)
-v3.2.0  UNCOMMITTED working set — deployed to production, pending commit
+v3.1.1  3af643c
+v3.2.0  7e3c7c8   (committed 2026-06-29, together with v3.3.0)
+v3.3.0  7e3c7c8   (tag v3.3.0 — Meeting-3 Increment 1)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 (uncommitted)`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8`

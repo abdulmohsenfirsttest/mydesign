@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v3.2.0` — quotes, milestones, files & realtime expansion. **Deployed to production but NOT yet committed to git** (last git commit is `3af643c`, v3.1.1, 2026-06-03). Committing it is the #1 health item.
-- **Last session record:** `SES-2026-001`
-- **Next session record:** `SES-2026-002`
+- **Current version:** `v3.3.0` — Meeting-3 Increment 1 (6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/`). Committed as `7e3c7c8` (tag `v3.3.0`) on 2026-06-29 — which also landed the previously-uncommitted v3.2.0 surface, so **production now matches git** and the #1 health item is closed.
+- **Last session record:** `SES-2026-002`
+- **Next session record:** `SES-2026-003`
 
 ---
 
