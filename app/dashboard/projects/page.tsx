@@ -16,10 +16,19 @@ export default function ProjectsPage() {
   useEffect(() => {
     const id = localStorage.getItem("client_id");
     if (!id) { router.push("/auth/login"); return; }
-    supabase.from("projects").select("*").eq("client_id", id).then(({ data }) => {
-      setProjects(data ?? []);
-      setLoading(false);
-    });
+
+    function fetchProjects() {
+      supabase.from("projects").select("*").eq("client_id", id!)
+        .then(({ data }) => { setProjects(data ?? []); setLoading(false); });
+    }
+
+    fetchProjects();
+
+    const channel = supabase.channel("client-projects")
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: `client_id=eq.${id}` }, fetchProjects)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [router]);
 
   return (

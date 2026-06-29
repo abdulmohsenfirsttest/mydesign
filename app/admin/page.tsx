@@ -11,15 +11,27 @@ export default function AdminPage() {
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
 
-    Promise.all([
-      supabase.from("projects").select("id, name, stage, progress, client_id, clients(name)"),
-      supabase.from("clients").select("id", { count: "exact", head: true }),
-      supabase.from("bookings").select("id, time, name, service").eq("date", today).order("time"),
-    ]).then(([{ data: proj }, { count }, { data: book }]) => {
-      setProjects((proj as unknown as typeof projects) ?? []);
-      setStats(s => ({ ...s, projects: proj?.length ?? 0, clients: count ?? 0 }));
-      setBookings(book ?? []);
-    });
+    function fetchAll() {
+      Promise.all([
+        supabase.from("projects").select("id, name, stage, progress, client_id, clients(name)"),
+        supabase.from("clients").select("id", { count: "exact", head: true }),
+        supabase.from("bookings").select("id, time, name, service").eq("date", today).order("time"),
+      ]).then(([{ data: proj }, { count }, { data: book }]) => {
+        setProjects((proj as unknown as typeof projects) ?? []);
+        setStats(s => ({ ...s, projects: proj?.length ?? 0, clients: count ?? 0 }));
+        setBookings(book ?? []);
+      });
+    }
+
+    fetchAll();
+
+    const channel = supabase.channel("admin-overview")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, fetchAll)
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, fetchAll)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (

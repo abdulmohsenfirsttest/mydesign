@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     if (path === "/admin/login") return;
     if (!localStorage.getItem("admin_session")) {
-      router.replace("/admin/login");
+      router.replace("/auth/login");
     }
   }, [path, router]);
 

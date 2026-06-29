@@ -18,14 +18,18 @@ export default function DashboardPage() {
     if (!id) { router.push("/auth/login"); return; }
     setClientName(name ?? "");
 
-    supabase
-      .from("projects")
-      .select("id, name, stage, progress, status")
-      .eq("client_id", id)
-      .then(({ data }) => {
-        setProjects(data ?? []);
-        setLoading(false);
-      });
+    function fetchProjects() {
+      supabase.from("projects").select("id, name, stage, progress, status").eq("client_id", id!)
+        .then(({ data }) => { setProjects(data ?? []); setLoading(false); });
+    }
+
+    fetchProjects();
+
+    const channel = supabase.channel("client-overview")
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: `client_id=eq.${id}` }, fetchProjects)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [router]);
 
   return (

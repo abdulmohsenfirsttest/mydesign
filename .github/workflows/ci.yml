@@ -1,0 +1,39 @@
+# MyDesign — Code Health Gate
+# Applies the versioning guide's "warn before you enforce" safety gate:
+#   - typecheck + build are BLOCKING (a failure fails the run)
+#   - lint runs in WARN mode (continue-on-error) until the 3 known errors in
+#     app/admin/messages/page.tsx are fixed, then flip `continue-on-error` to false.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (blocking)
+        run: npm run typecheck
+
+      - name: Lint (warn mode — flip continue-on-error to false once clean)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Production build (blocking)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

@@ -1,9 +1,11 @@
+// Canonical Meeting-3 catalog — kept in step with the /book service list.
 const services = [
-  "Designing",
-  "3D Modeling",
-  "Renovation",
-  "Construction",
-  "Engineering",
+  "Interior Design",
+  "Exterior Design",
+  "Landscape Design",
+  "Interior & Exterior",
+  "Full Package",
+  "Renovation Planning & Construction Management",
 ];
 
 export default function Services() {

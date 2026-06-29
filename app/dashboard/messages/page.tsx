@@ -11,9 +11,11 @@ type Meeting = {
   type: string;
   summary: string;
   decisions: string[];
-  files: { name: string; size: string }[];
+  files: { name: string; size: string; url: string }[];
   status: string;
   approved_at: string | null;
+  client_comment: string | null;
+  admin_reply: string | null;
   project_id: string;
 };
 
@@ -27,20 +29,14 @@ function CheckIcon() {
   );
 }
 
-function FileIcon() {
-  return (
-    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-  );
-}
-
 export default function MeetingsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [savingComment, setSavingComment] = useState<string | null>(null);
 
   useEffect(() => {
     const clientId = localStorage.getItem("client_id");
@@ -56,9 +52,23 @@ export default function MeetingsPage() {
 
   useEffect(() => {
     if (!selectedId) return;
-    supabase.from("meetings").select("*").eq("project_id", selectedId).order("created_at").then(({ data }) => {
-      setMeetings(data ?? []);
-    });
+
+    function fetchMeetings() {
+      supabase.from("meetings").select("*").eq("project_id", selectedId!).order("created_at").then(({ data }) => {
+        setMeetings(data ?? []);
+        const initial: Record<string, string> = {};
+        (data ?? []).forEach((m: Meeting) => { if (m.client_comment) initial[m.id] = m.client_comment; });
+        setComments(initial);
+      });
+    }
+
+    fetchMeetings();
+
+    const channel = supabase.channel(`client-meetings-${selectedId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "meetings", filter: `project_id=eq.${selectedId}` }, fetchMeetings)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [selectedId]);
 
   async function approveMeeting(meetingId: string) {
@@ -66,11 +76,38 @@ export default function MeetingsPage() {
     setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, status: "Approved", approved_at: new Date().toISOString() } : m));
   }
 
+  async function unapprove(meetingId: string) {
+    await supabase.from("meetings").update({ status: "Pending Approval" }).eq("id", meetingId);
+    setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, status: "Pending Approval" } : m));
+  }
+
+  async function downloadFile(url: string, name: string) {
+    const marker = "/storage/v1/object/public/meetings/";
+    const idx = url.indexOf(marker);
+    if (idx === -1) { window.open(url, "_blank"); return; }
+    const path = decodeURIComponent(url.slice(idx + marker.length));
+    const { data, error } = await supabase.storage.from("meetings").download(path);
+    if (error || !data) { window.open(url, "_blank"); return; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(data);
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function submitComment(meetingId: string) {
+    const text = comments[meetingId]?.trim();
+    if (!text) return;
+    setSavingComment(meetingId);
+    await supabase.from("meetings").update({ client_comment: text }).eq("id", meetingId);
+    setMeetings(prev => prev.map(m => m.id === meetingId ? { ...m, client_comment: text } : m));
+    setSavingComment(null);
+  }
+
   const selectedProject = projects.find(p => p.id === selectedId);
 
   return (
     <div className="flex h-screen">
-      {/* Project list */}
       <div className="w-64 border-r border-white/[0.06] flex flex-col flex-shrink-0">
         <div className="px-5 py-4 border-b border-white/[0.06]">
           <h1 className="text-white text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>MEETINGS</h1>
@@ -89,7 +126,6 @@ export default function MeetingsPage() {
         </div>
       </div>
 
-      {/* Meeting timeline */}
       <div className="flex-1 overflow-y-auto p-8">
         {!selectedProject ? null : (
           <div className="max-w-2xl">
@@ -145,26 +181,60 @@ export default function MeetingsPage() {
                             <p className="text-white/20 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>DOCUMENTATION</p>
                             <div className="space-y-2">
                               {m.files.map((f, j) => (
-                                <div key={j} className="flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02] text-white/40 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-                                  <FileIcon /><span>{f.name}</span><span className="text-white/20">{f.size}</span>
+                                <div key={j} className="flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02]">
+                                  <svg className="w-3.5 h-3.5 flex-shrink-0 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                  <span className="flex-1 text-white/50 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</span>
+                                  <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.size}</span>
+                                  <a href={f.url} target="_blank" rel="noopener noreferrer"
+                                    className="text-white/20 hover:text-white/60 transition-colors ml-1" title="Open">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                  </a>
+                                  <button onClick={() => downloadFile(f.url, f.name)}
+                                    className="text-white/20 hover:text-white/60 transition-colors" title="Download">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                  </button>
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
 
-                        {!isApproved && (
-                          <div className="pt-2 border-t border-white/[0.06]">
-                            <p className="text-white/25 text-xs mb-3" style={{ fontFamily: "var(--font-inter)" }}>
-                              By approving, you confirm these notes accurately reflect what was discussed.
-                            </p>
-                            <button onClick={() => approveMeeting(m.id)}
-                              className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+                        <div className="pt-4 border-t border-white/[0.06]">
+                          {m.admin_reply && (
+                            <div className="mb-4 bg-white/[0.03] border border-white/[0.06] px-4 py-3">
+                              <p className="text-white/20 text-xs tracking-widest mb-1" style={{ fontFamily: "var(--font-inter)" }}>REPLY FROM DESIGN TEAM</p>
+                              <p className="text-white/60 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{m.admin_reply}</p>
+                            </div>
+                          )}
+                          <p className="text-white/20 text-xs tracking-widest mb-2" style={{ fontFamily: "var(--font-inter)" }}>YOUR COMMENT</p>
+                          <textarea
+                            value={comments[m.id] ?? ""}
+                            onChange={e => setComments(c => ({ ...c, [m.id]: e.target.value }))}
+                            placeholder="Add a note or question..."
+                            rows={2}
+                            className="w-full bg-transparent border border-white/10 text-white/60 text-xs px-3 py-2.5 focus:outline-none focus:border-white/30 transition-colors placeholder-white/20 resize-none mb-3"
+                            style={{ fontFamily: "var(--font-inter)" }} />
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => submitComment(m.id)} disabled={savingComment === m.id || !comments[m.id]?.trim()}
+                              className="px-4 py-2 border border-white/20 text-white/40 text-xs hover:border-white/40 hover:text-white/60 transition-colors disabled:opacity-30"
                               style={{ fontFamily: "var(--font-inter)" }}>
-                              Approve Meeting Notes
+                              {savingComment === m.id ? "Saving..." : "Send Comment"}
                             </button>
+                            {!isApproved ? (
+                              <button onClick={() => approveMeeting(m.id)}
+                                className="px-6 py-2 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+                                style={{ fontFamily: "var(--font-inter)" }}>
+                                Approve Notes
+                              </button>
+                            ) : (
+                              <button onClick={() => unapprove(m.id)}
+                                className="px-4 py-2 border border-white/10 text-white/20 text-xs hover:border-white/30 hover:text-white/40 transition-colors"
+                                style={{ fontFamily: "var(--font-inter)" }}>
+                                Unapprove
+                              </button>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   );

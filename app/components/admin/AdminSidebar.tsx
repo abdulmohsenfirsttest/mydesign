@@ -32,7 +32,9 @@ export default function AdminSidebar() {
 
   function signOut() {
     localStorage.removeItem("admin_session");
-    router.push("/admin/login");
+    localStorage.removeItem("admin_id");
+    localStorage.removeItem("admin_name");
+    router.push("/auth/login");
   }
 
   return (
@@ -42,7 +44,7 @@ export default function AdminSidebar() {
           <div className="w-7 h-7 rounded-full border border-white/60 flex items-center justify-center">
             <span className="text-white text-xs font-bold" style={{ fontFamily: "var(--font-playfair)" }}>my</span>
           </div>
-          <span className="text-white text-xs font-medium tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>Admin</span>
+          <span className="text-white text-xs font-medium tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>Owner Dashboard</span>
         </Link>
         <span className="text-xs bg-white/10 text-white/50 px-2 py-0.5 rounded-sm" style={{ fontFamily: "var(--font-inter)" }}>Team</span>
       </div>

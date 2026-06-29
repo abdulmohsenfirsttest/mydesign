@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local account/data backups — kept OUT of git (contains plaintext credentials);
+# rely on the off-repo backup routine instead.
+/.backups

@@ -6,12 +6,17 @@ import Footer from "../components/Footer";
 import { supabase } from "@/lib/supabase";
 
 const times = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM"];
-const services = ["Interior Design Consultation", "3D Modeling & Visualization", "Renovation Planning", "Construction Management", "Full Project Design"];
+// Meeting-3 service catalog: 5 design services (handled by the designers) +
+// 1 management service (routed to the Project Manager, not the design team).
+const designServices = ["Interior Design", "Exterior Design", "Landscape Design", "Interior & Exterior", "Full Package"];
+const managementServices = ["Renovation Planning & Construction Management"];
 
 const days = Array.from({ length: 14 }, (_, i) => {
   const d = new Date();
   d.setDate(d.getDate() + i + 1);
-  return { label: d.toLocaleDateString("en-US", { weekday: "short" }), date: d.getDate(), full: d.toISOString().split("T")[0] };
+  // Build the stored date from LOCAL components (not toISOString, which is UTC and
+  // can roll back a day in UTC+3 when the page is opened in the early morning).
+  return { label: d.toLocaleDateString("en-US", { weekday: "short" }), date: d.getDate(), full: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 });
 
 export default function BookPage() {
@@ -27,7 +32,7 @@ export default function BookPage() {
   async function handleBook(e: React.FormEvent) {
     e.preventDefault();
     await Promise.all([
-      supabase.from("bookings").insert({ name, phone, email, service: selectedService, date: selectedDay, time: selectedTime }),
+      supabase.from("bookings").insert({ name, phone, email, service: selectedService, date: selectedDay, time: selectedTime, status: "Pending" }),
       supabase.from("clients").upsert({ name, phone, email, password: "123123" }, { onConflict: "phone", ignoreDuplicates: true }),
     ]);
     setBooked(true);
@@ -73,12 +78,24 @@ export default function BookPage() {
                 {/* Step 1 - Service */}
                 <div>
                   <h3 className="text-white text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>01 — SELECT SERVICE</h3>
-                  <div className="space-y-2">
-                    {services.map(s => (
+                  <p className="text-white/25 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>DESIGN</p>
+                  <div className="space-y-2 mb-6">
+                    {designServices.map(s => (
                       <button key={s} onClick={() => setSelectedService(s)}
                         className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-white text-white bg-white/5" : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"}`}
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {s}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-white/25 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>MANAGEMENT</p>
+                  <div className="space-y-2">
+                    {managementServices.map(s => (
+                      <button key={s} onClick={() => setSelectedService(s)}
+                        className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-white text-white bg-white/5" : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"}`}
+                        style={{ fontFamily: "var(--font-inter)" }}>
+                        {s}
+                        <span className="block text-white/25 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>Handled by our Project Management team</span>
                       </button>
                     ))}
                   </div>

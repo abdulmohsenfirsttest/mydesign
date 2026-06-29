@@ -11,11 +11,39 @@ export default function ClientsPage() {
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   useEffect(() => {
-    supabase.from("clients").select("id, name, email, phone, created_at").order("created_at", { ascending: false })
-      .then(({ data }) => { setClients(data ?? []); setLoading(false); });
+    function fetchClients() {
+      supabase.from("clients").select("id, name, email, phone, created_at").order("created_at", { ascending: false })
+        .then(({ data }) => { setClients(data ?? []); setLoading(false); });
+    }
+
+    fetchClients();
+
+    const channel = supabase.channel("admin-clients")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, fetchClients)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  async function saveEdit(id: string) {
+    if (!editName.trim()) return;
+    await supabase.from("clients").update({ name: editName.trim() }).eq("id", id);
+    setClients(prev => prev.map(c => c.id === id ? { ...c, name: editName.trim() } : c));
+    setEditing(null);
+  }
+
+  async function deleteClient(id: string) {
+    if (!confirm("Delete this client? This cannot be undone.")) return;
+    setDeleting(id);
+    await supabase.from("clients").delete().eq("id", id);
+    setClients(prev => prev.filter(c => c.id !== id));
+    setDeleting(null);
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -99,21 +127,40 @@ export default function ClientsPage() {
         <div className="border border-white/[0.08] bg-[#161616]">
           <div className="grid grid-cols-12 px-5 py-3 border-b border-white/[0.06] text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
             <span className="col-span-4">Name</span>
-            <span className="col-span-4">Email</span>
+            <span className="col-span-3">Email</span>
             <span className="col-span-3">Phone</span>
             <span className="col-span-1">Joined</span>
+            <span className="col-span-1" />
           </div>
           {clients.map((c, i) => (
             <div key={c.id} className={`grid grid-cols-12 items-center px-5 py-4 hover:bg-white/[0.02] transition-colors ${i < clients.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
               <div className="col-span-4 flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/50 text-xs">{c.name[0]}</div>
-                <span className="text-white/70 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{c.name}</span>
+                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/50 text-xs flex-shrink-0">{c.name[0]}</div>
+                {editing === c.id ? (
+                  <div className="flex items-center gap-2 flex-1">
+                    <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") saveEdit(c.id); if (e.key === "Escape") setEditing(null); }}
+                      className="flex-1 bg-transparent border border-white/30 text-white/80 text-xs px-2 py-1 focus:outline-none focus:border-white/60"
+                      style={{ fontFamily: "var(--font-inter)" }} />
+                    <button onClick={() => saveEdit(c.id)} className="text-white/40 hover:text-white/80 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>✓</button>
+                    <button onClick={() => setEditing(null)} className="text-white/20 hover:text-white/50 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>✕</button>
+                  </div>
+                ) : (
+                  <span className="text-white/70 text-sm cursor-pointer hover:text-white transition-colors" onClick={() => { setEditing(c.id); setEditName(c.name); }}
+                    style={{ fontFamily: "var(--font-inter)" }} title="Click to edit">{c.name}</span>
+                )}
               </div>
-              <span className="col-span-4 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{c.email || "—"}</span>
+              <span className="col-span-3 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{c.email || "—"}</span>
               <span className="col-span-3 text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{c.phone}</span>
               <span className="col-span-1 text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                 {new Date(c.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
               </span>
+              <div className="col-span-1 flex justify-end">
+                <button onClick={() => deleteClient(c.id)} disabled={deleting === c.id}
+                  className="text-red-400/30 hover:text-red-400/70 transition-colors disabled:opacity-30 p-1" title="Delete client">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>

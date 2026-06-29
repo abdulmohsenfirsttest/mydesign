@@ -17,6 +17,22 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
+    // Admins can sign in from this same portal.
+    const { data: admin } = await supabase
+      .from("admins")
+      .select("id, name")
+      .eq("phone", phone.trim())
+      .eq("password", password)
+      .single();
+
+    if (admin) {
+      localStorage.setItem("admin_session", "true");
+      localStorage.setItem("admin_id", admin.id);
+      localStorage.setItem("admin_name", admin.name);
+      router.push("/admin");
+      return;
+    }
+
     const { data, error: dbError } = await supabase
       .from("clients")
       .select("id, name")

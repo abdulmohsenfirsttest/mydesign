@@ -17,8 +17,18 @@ export default function BookingsPage() {
   const [created, setCreated] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    supabase.from("bookings").select("*").order("date").order("time")
-      .then(({ data }) => { setBookings(data ?? []); setLoading(false); });
+    function fetchBookings() {
+      supabase.from("bookings").select("*").order("date").order("time")
+        .then(({ data }) => { setBookings(data ?? []); setLoading(false); });
+    }
+
+    fetchBookings();
+
+    const channel = supabase.channel("admin-bookings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, fetchBookings)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function updateStatus(id: string, status: string) {
