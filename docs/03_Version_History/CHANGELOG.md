@@ -127,6 +127,7 @@ v3.1.0  ab1c97b → 4c60527 → 48a24c8 → 9a952a0
 v3.1.1  3af643c
 v3.2.0  7e3c7c8   (committed 2026-06-29, together with v3.3.0)
 v3.3.0  7e3c7c8   (tag v3.3.0 — Meeting-3 Increment 1)
+v3.4.0  08e9958   (tag v3.4.0 — operational backbone: backups + bug log)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958`
