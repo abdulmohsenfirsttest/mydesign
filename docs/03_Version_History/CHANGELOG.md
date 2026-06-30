@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v3.4.0 | 2026-06-30 | MINOR | Operational backbone: automated nightly Supabase backups (→ Drive) + bug log + backups doc |
 | v3.3.0 | 2026-06-29 | MINOR | Meeting-3 Increment 1: 6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/` |
 | v3.2.0 | 2026-06-03 → 2026-06-21 | MINOR | Quotes, milestones, files & realtime expansion (committed 2026-06-29 with v3.3.0) |
 | v3.1.1 | 2026-06-03 | PATCH | Fix client login phone-matching; "+ Add to Clients" on bookings (last commit in git) |
@@ -102,6 +103,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Why:** Begin building Meeting 3 into the product, starting with the role-independent Phase-1 intake that doesn't depend on the still-open decisions.
 - **Schema:** New `spaces` table (FK → projects on delete cascade, `sqm numeric(10,2)`, RLS disabled to match siblings); `milestones.start_date`/`end_date` (nullable); `spaces` added to the realtime publication. Applied to prod as migration `meeting3_foundation` and tracked as `supabase/migrations/0001_meeting3_foundation.sql`.
 - **Decision:** MINOR — a faithful feature batch, not a new era. Roles, internal pricing, the proposal builder, bundling, and attachment-enforcement were **deferred** pending the owner's §6 decisions. Adopted the `migrations/` directory (advances ADR-0009).
+
+### v3.4.0 · Operational backbone — backups + bug log
+- **What:** Automated nightly Supabase backups (`scripts/backup-data.mjs` + `run-backup.sh` + launchd `com.mydesign.backup`, daily 02:00 → Google Drive `mydesign/Backups` + a `git archive` source zip in `mydesign/Code`); a seeded `BUGLOG.md`; a `BACKUPS.md`; and the CODE_HEALTH weekly routine now verifies the backup + records bugs.
+- **Why:** Bring MyDesign to the same operational maturity as Favor Plus / PHSN (versioning + session records already existed).
+- **Schema:** None.
+- **Decision:** MINOR — operational tooling, no runtime change. The backup uses the anon key for now (works only because RLS is off); add a service-role key before the RLS Phase-2 lockdown.
 
 ---
 

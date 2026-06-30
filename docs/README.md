@@ -18,7 +18,7 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 | `01_Product_Requirements/` | What the product is meant to do — surfaces, routes, workflow model, data model. | Product requirements doc(s) |
 | `02_Architecture_Decisions/` | One ADR per locked-in decision: the problem, the approach chosen, the consequences. | ADRs (e.g. custom phone+password auth, client-side Supabase access, 7-stage workflow) |
 | `03_Version_History/` | The version log — every `vX.Y.Z` with its commit, plus per-session records under `session-records/`. | `CHANGELOG` / version log + `session-records/` (one `SES-YYYY-NNN` file per working session) |
-| `04_Code_Health_&_Security/` | Build/typecheck/lint/dependency state and the honest security posture + phased remediation roadmap. | Code-health report, security posture & remediation plan |
+| `04_Code_Health_&_Security/` | Build/typecheck/lint/dependency state, the security posture + roadmap, the bug log, and the backups routine. | CODE_HEALTH, SECURITY, BUGLOG, BACKUPS |
 
 ---
 
@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v3.3.0` — Meeting-3 Increment 1 (6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/`). Committed as `7e3c7c8` (tag `v3.3.0`) on 2026-06-29 — which also landed the previously-uncommitted v3.2.0 surface, so **production now matches git** and the #1 health item is closed.
-- **Last session record:** `SES-2026-002`
-- **Next session record:** `SES-2026-003`
+- **Current version:** `v3.4.0` — operational backbone: automated nightly Supabase backups (→ Drive `mydesign/Backups`), a bug log (`BUGLOG.md`), and a backups doc (`BACKUPS.md`). Product/app surface unchanged since v3.3.0 (Meeting-3 Increment 1, prod = git).
+- **Last session record:** `SES-2026-003`
+- **Next session record:** `SES-2026-004`
 
 ---
 

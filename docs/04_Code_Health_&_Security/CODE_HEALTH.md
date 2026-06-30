@@ -117,7 +117,8 @@ A lighter-cadence mirror of the Favor Plus daily check, sized for a single-maint
 - `git status` — confirm the working tree is clean and `main` matches production. If there's uncommitted deployed work, that's the first thing to fix.
 - `next build` + `tsc --noEmit` — confirm both still pass.
 - `npm audit` and `npm outdated` — review new findings; apply only the safe bumps from section 1, hold majors, never `--force`.
-- Confirm the off-repo account/data backup is current (the `.backups/` JSON export and any Supabase export), the same way Favor Plus verifies its daily backup.
+- **Backups:** confirm the nightly Supabase backup is current — `cat "$HOME/Google Drive/My Drive/mydesign/Backups/LATEST.txt"` (recent timestamp + row count) and `launchctl list | grep mydesign` (job loaded). See **BACKUPS.md**. Reminder: add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` before the RLS Phase-2 lockdown, or backups will miss rows.
+- **Bug log:** make sure any production bug hit since the last check (and its fix) is recorded in **BUGLOG.md**.
 - Glance at the security roadmap (Phase 1 → 2 → 3 in the security doc) and the open items in the latest session record — re-date or close anything that's slipped.
 
 The goal of the routine is the same as Favor Plus's: nothing silently rots, nothing ships that isn't in git, and the documents keep describing the real system.
