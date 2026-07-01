@@ -8,7 +8,6 @@ type Meeting = {
   summary: string; decisions: string[];
   files: { name: string; size: string; url: string }[];
   status: string; client_comment: string | null; admin_reply: string | null;
-  drive_link: string | null;
   project_id: string;
 };
 type Project = { id: string; name: string; client_name: string; client_id: string; stage: string; progress: number };
@@ -20,6 +19,7 @@ type Quote = { id: string; title: string; status: string; lines: QuoteLine[]; fi
 type InternalQuote = { id: string; project_id: string; sqm_total: number; price_per_sqm: number | null; total: number | null; status: string; requested_by: string | null; approved_by: string | null; created_at: string; approved_at: string | null };
 type Proposal = { id: string; project_id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string; pdf_url: string | null };
 type Tab = "meetings" | "milestones" | "spaces" | "proposal" | "quotes";
+type ProjectNote = { id: string; author_name: string | null; body: string; created_at: string };
 
 const meetingTypes = ["In-Person", "Video Call", "Phone Call", "Site Visit"];
 const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
@@ -47,7 +47,7 @@ export default function AdminProjectHub() {
   // Meetings
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
-  const [meetingForm, setMeetingForm] = useState({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "", drive_link: "" });
+  const [meetingForm, setMeetingForm] = useState({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "" });
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [meetingSaved, setMeetingSaved] = useState(false);
@@ -92,6 +92,11 @@ export default function AdminProjectHub() {
   // Proposal builder
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [proposalForm, setProposalForm] = useState({ scope: "", stages: "", pricing: "", terms: "" });
+  // Internal notes (staff-only) shown beside the proposal — never seen by the client.
+  const [notes, setNotes] = useState<ProjectNote[]>([]);
+  const [noteBody, setNoteBody] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteError, setNoteError] = useState("");
   const [savingProposal, setSavingProposal] = useState(false);
   const [proposalError, setProposalError] = useState("");
   const [proposalSaved, setProposalSaved] = useState(false);
@@ -158,6 +163,10 @@ export default function AdminProjectHub() {
     supabase.from("proposals").select("*").eq("project_id", selectedId!).order("created_at", { ascending: false }).limit(1)
       .then(({ data }) => setProposal((data as Proposal[] | null)?.[0] ?? null));
   }
+  function fetchNotes() {
+    supabase.from("project_notes").select("*").eq("project_id", selectedId!).order("created_at", { ascending: false })
+      .then(({ data }) => setNotes((data as ProjectNote[]) ?? []));
+  }
 
   useEffect(() => {
     if (!selectedId) return;
@@ -167,6 +176,7 @@ export default function AdminProjectHub() {
     fetchQuotes();
     fetchInternalQuote();
     fetchProposal();
+    fetchNotes();
 
     const mc = supabase.channel(`hub-meetings-${selectedId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "meetings", filter: `project_id=eq.${selectedId}` }, fetchMeetings)
@@ -186,6 +196,9 @@ export default function AdminProjectHub() {
     const pc = supabase.channel(`hub-proposals-${selectedId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "proposals", filter: `project_id=eq.${selectedId}` }, fetchProposal)
       .subscribe();
+    const nc = supabase.channel(`hub-notes-${selectedId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_notes", filter: `project_id=eq.${selectedId}` }, fetchNotes)
+      .subscribe();
 
     return () => {
       supabase.removeChannel(mc);
@@ -194,6 +207,7 @@ export default function AdminProjectHub() {
       supabase.removeChannel(qc);
       supabase.removeChannel(iqc);
       supabase.removeChannel(pc);
+      supabase.removeChannel(nc);
     };
   }, [selectedId]);
 
@@ -206,6 +220,27 @@ export default function AdminProjectHub() {
       terms: proposal?.terms ?? "",
     });
   }, [proposal, selectedId]);
+
+  async function handleAddNote(e: React.FormEvent) {
+    e.preventDefault();
+    const body = noteBody.trim();
+    if (!body || !selectedId) return;
+    setNoteError("");
+    setSavingNote(true);
+    const me = getAdmin();
+    const { error } = await supabase.from("project_notes").insert({
+      project_id: selectedId, author_id: me?.id ?? null, author_name: me?.name ?? null, body,
+    });
+    setSavingNote(false);
+    if (error) { setNoteError(error.message); return; }
+    setNoteBody("");
+    fetchNotes();
+  }
+
+  async function deleteNote(noteId: string) {
+    await supabase.from("project_notes").delete().eq("id", noteId);
+    setNotes(prev => prev.filter(n => n.id !== noteId));
+  }
 
   async function handleAddMeeting(e: React.FormEvent) {
     e.preventDefault();
@@ -224,10 +259,9 @@ export default function AdminProjectHub() {
       time: meetingForm.time, type: meetingForm.type, summary: meetingForm.summary,
       decisions: meetingForm.decisions.split("\n").map(d => d.trim()).filter(Boolean),
       files: uploadedFiles, status: "Pending Approval",
-      drive_link: meetingForm.drive_link || null,
     }).select().single();
     if (data) setMeetings(prev => [...prev, data]);
-    setMeetingForm({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "", drive_link: "" });
+    setMeetingForm({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "" });
     setAttachedFiles([]);
     setUploading(false);
     setMeetingSaved(true);
@@ -639,13 +673,6 @@ export default function AdminProjectHub() {
                         className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
                         style={{ fontFamily: "var(--font-inter)" }} />
                     </div>
-                    <div className="mb-4">
-                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Google Drive link <span className="text-white/15 normal-case tracking-normal">(optional)</span></label>
-                      <input type="url" value={meetingForm.drive_link} onChange={e => setMeetingForm(f => ({ ...f, drive_link: e.target.value }))}
-                        placeholder="https://drive.google.com/..."
-                        className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
-                        style={{ fontFamily: "var(--font-inter)" }} />
-                    </div>
                     <div className="mb-5">
                       <input ref={fileRef} type="file" multiple className="hidden" onChange={e => setAttachedFiles(Array.from(e.target.files ?? []))} />
                       <button type="button" onClick={() => fileRef.current?.click()}
@@ -712,11 +739,6 @@ export default function AdminProjectHub() {
                                 </div>
                               ))}
                             </div>
-                          )}
-                          {m.drive_link && (
-                            <a href={m.drive_link} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02] text-white/50 text-xs hover:text-white/80 hover:border-white/20 transition-colors"
-                              style={{ fontFamily: "var(--font-inter)" }}>Drive link ↗</a>
                           )}
                         </div>
                       </div>
@@ -1069,6 +1091,38 @@ export default function AdminProjectHub() {
                     )}
                   </div>
                 )}
+                {/* INTERNAL NOTES — staff only, never shown to the client */}
+                <div className="mt-8 border-t border-white/[0.08] pt-6">
+                  <h3 className="text-white text-sm tracking-widest mb-1" style={{ fontFamily: "var(--font-inter)" }}>INTERNAL NOTES</h3>
+                  <p className="text-white/25 text-xs mb-4" style={{ fontFamily: "var(--font-inter)" }}>Staff only — the client never sees these.</p>
+                  <form onSubmit={handleAddNote} className="mb-4">
+                    <textarea value={noteBody} onChange={e => setNoteBody(e.target.value)} rows={2}
+                      placeholder="Add a private note for the team..."
+                      className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none mb-2"
+                      style={{ fontFamily: "var(--font-inter)" }} />
+                    {noteError && <p className="text-red-400/70 text-xs mb-2" style={{ fontFamily: "var(--font-inter)" }}>{noteError}</p>}
+                    <button type="submit" disabled={savingNote || !noteBody.trim()}
+                      className="px-5 py-2 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30"
+                      style={{ fontFamily: "var(--font-inter)" }}>{savingNote ? "Adding..." : "Add note"}</button>
+                  </form>
+                  {notes.length === 0 ? (
+                    <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No notes yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {notes.map(n => (
+                        <div key={n.id} className="border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className="text-white/70 text-xs leading-relaxed whitespace-pre-wrap flex-1" style={{ fontFamily: "var(--font-inter)" }}>{n.body}</p>
+                            <button onClick={() => deleteNote(n.id)} className="text-red-400/30 hover:text-red-400/70 transition-colors flex-shrink-0" title="Delete note">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                          </div>
+                          <p className="text-white/25 text-xs mt-1.5" style={{ fontFamily: "var(--font-inter)" }}>{n.author_name || "Staff"} · {new Date(n.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })} {new Date(n.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
