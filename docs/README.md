@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.1.0` — email-or-phone login (one portal for clients + team) + team staff accounts, on top of the v4.0.0 Meeting-3 workflow (roles, internal pricing, proposals, delivery). Committed `1df2d06`, deployed. Enforcement is client-side; true price-hiding is Security Phase 2 (see ADR-0010).
-- **Last session record:** `SES-2026-005`
-- **Next session record:** `SES-2026-006`
+- **Current version:** `v4.2.0` — owner-configurable per-account permissions (the owner sets which admin sections each account can see), on top of v4.1.0 (email-or-phone login + team) and the v4.0.0 Meeting-3 workflow. Committed `7fec31f`, deployed. Enforcement is client-side; true enforcement is Security Phase 2 (see ADR-0010).
+- **Last session record:** `SES-2026-006`
+- **Next session record:** `SES-2026-007`
 
 ---
 

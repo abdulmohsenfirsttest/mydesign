@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.2.0 | 2026-07-01 | MINOR | Owner-configurable per-account permissions (what each account can see); Staff → Staff & Permissions |
 | v4.1.0 | 2026-07-01 | MINOR | Email-or-phone login (one portal for clients + team); team staff accounts (Tuqa manager + 4 designers) |
 | v4.0.0 | 2026-07-01 | MAJOR — new era | Meeting-3 full workflow: staff roles, internal price/sqm + manager approval, client proposal (approve/reject), milestone delivery rules |
 | v3.4.0 | 2026-06-30 | MINOR | Operational backbone: automated nightly Supabase backups (→ Drive) + bug log + backups doc |
@@ -124,6 +125,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** migration `0003_staff_email_login` (`admins.email`; `admins.phone` nullable; unique `lower(email)`).
 - **Decision:** MINOR. (Tuqa mapped to `manager` — the app's only oversight role; a dedicated `team_leader` role is a future option.)
 
+### v4.2.0 · Owner-configurable per-account permissions
+- **What:** `admins.permissions` (jsonb) lets the owner set exactly which admin **areas** each account can see (Projects, Hub, Pricing, Clients, Bookings, Quotes, Uploads, Staff); `NULL` = role defaults. The sidebar + the Pricing and Staff pages gate on the effective areas (`canSee`). The Staff page becomes **Staff & Permissions** — create with per-area toggles + a per-row editor for any account's role + access; the owner row (`0547080147`) is protected (full access, not editable/deletable).
+- **Why:** the owner wanted to run access control directly (make accounts, set what each sees) ahead of a review meeting.
+- **Schema:** migration `0004_account_permissions` (`admins.permissions jsonb`).
+- **Decision:** MINOR. Enforcement is client-side (ADR-0001/0010) — the UI access control is real; the security boundary is Phase 2.
+
 ---
 
 ## Version → commit map
@@ -144,6 +151,7 @@ v3.3.0  7e3c7c8   (tag v3.3.0 — Meeting-3 Increment 1)
 v3.4.0  08e9958   (tag v3.4.0 — operational backbone: backups + bug log)
 v4.0.0  de19920   (tag v4.0.0 — Meeting-3 full workflow: roles/pricing/proposals/delivery)
 v4.1.0  1df2d06   (tag v4.1.0 — email-or-phone login + team staff accounts)
+v4.2.0  7fec31f   (tag v4.2.0 — owner-configurable per-account permissions)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f`
