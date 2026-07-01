@@ -8,6 +8,7 @@ type Meeting = {
   summary: string; decisions: string[];
   files: { name: string; size: string; url: string }[];
   status: string; client_comment: string | null; admin_reply: string | null;
+  drive_link: string | null;
   project_id: string;
 };
 type Project = { id: string; name: string; client_name: string; client_id: string; stage: string; progress: number };
@@ -17,14 +18,14 @@ type QuoteLine = { item: string; amount: string };
 type QuoteFile = { name: string; size: string; url: string };
 type Quote = { id: string; title: string; status: string; lines: QuoteLine[]; files: QuoteFile[]; created_at: string };
 type InternalQuote = { id: string; project_id: string; sqm_total: number; price_per_sqm: number | null; total: number | null; status: string; requested_by: string | null; approved_by: string | null; created_at: string; approved_at: string | null };
-type Proposal = { id: string; project_id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string };
+type Proposal = { id: string; project_id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string; pdf_url: string | null };
 type Tab = "meetings" | "milestones" | "spaces" | "proposal" | "quotes";
 
 const meetingTypes = ["In-Person", "Video Call", "Phone Call", "Site Visit"];
 const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
 const stageProgress: Record<string, number> = { "Quotation": 14, "Mood Board": 28, "2D": 42, "3D": 57, "Plans": 71, "Payment": 85, "Delivery": 100 };
 const quoteTitles = ["Quotation", "Mood Board", "2D Plans", "3D Plans", "First Payment", "Second Payment", "Final Payment", "Delivery"];
-const milestoneStatuses = ["Upcoming", "In Progress", "Completed"];
+const milestoneStatuses = ["Upcoming", "In Progress", "Completed", "Skipped"];
 
 function CheckIcon() {
   return (
@@ -46,7 +47,7 @@ export default function AdminProjectHub() {
   // Meetings
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [showMeetingForm, setShowMeetingForm] = useState(false);
-  const [meetingForm, setMeetingForm] = useState({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "" });
+  const [meetingForm, setMeetingForm] = useState({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "", drive_link: "" });
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [meetingSaved, setMeetingSaved] = useState(false);
@@ -223,9 +224,10 @@ export default function AdminProjectHub() {
       time: meetingForm.time, type: meetingForm.type, summary: meetingForm.summary,
       decisions: meetingForm.decisions.split("\n").map(d => d.trim()).filter(Boolean),
       files: uploadedFiles, status: "Pending Approval",
+      drive_link: meetingForm.drive_link || null,
     }).select().single();
     if (data) setMeetings(prev => [...prev, data]);
-    setMeetingForm({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "" });
+    setMeetingForm({ title: "", date: "", time: "", type: "In-Person", summary: "", decisions: "", drive_link: "" });
     setAttachedFiles([]);
     setUploading(false);
     setMeetingSaved(true);
@@ -371,6 +373,56 @@ export default function AdminProjectHub() {
     if (!selectedId) return;
     setProposalError("");
     setSavingProposal(true);
+
+    // Generate a quotation PDF (subtotal + 15% VAT) and upload it before writing the proposal row.
+    let pdfUrl: string | null = null;
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const proj = projects.find(p => p.id === selectedId);
+      const doc = new jsPDF();
+      const marginX = 20;
+      let y = 24;
+      doc.setFontSize(20);
+      doc.text("QUOTATION", marginX, y);
+      y += 12;
+      doc.setFontSize(11);
+      doc.text(`Client: ${proj?.client_name ?? "—"}`, marginX, y); y += 7;
+      doc.text(`Project: ${proj?.name ?? "—"}`, marginX, y); y += 12;
+
+      const section = (title: string, body: string) => {
+        doc.setFontSize(12);
+        doc.text(title, marginX, y); y += 7;
+        doc.setFontSize(10);
+        const lines = doc.splitTextToSize(body || "—", 170);
+        doc.text(lines, marginX, y);
+        y += lines.length * 5 + 8;
+      };
+      section("Scope of Work", proposalForm.scope);
+      section("Stages of Work", proposalForm.stages);
+      section("Terms & Conditions", proposalForm.terms);
+
+      const subtotal = parseFloat(String(proposalForm.pricing).replace(/[^0-9.]/g, "")) || 0;
+      const vat = subtotal * 0.15;
+      const total = subtotal + vat;
+      doc.setFontSize(12);
+      doc.text("Pricing", marginX, y); y += 7;
+      doc.setFontSize(10);
+      doc.text(`Subtotal: SAR ${subtotal.toLocaleString("en-US")}`, marginX, y); y += 6;
+      doc.text(`VAT (15%): SAR ${vat.toLocaleString("en-US")}`, marginX, y); y += 6;
+      doc.text(`Total: SAR ${total.toLocaleString("en-US")}`, marginX, y);
+
+      const blob = doc.output("blob");
+      const path = `${selectedId}/proposal-${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage.from("quotes").upload(path, blob, { contentType: "application/pdf", upsert: true });
+      if (upErr) { setProposalError(upErr.message); setSavingProposal(false); return; }
+      const { data: urlData } = supabase.storage.from("quotes").getPublicUrl(path);
+      pdfUrl = urlData.publicUrl;
+    } catch (err) {
+      setProposalError(err instanceof Error ? err.message : "Failed to generate quotation PDF.");
+      setSavingProposal(false);
+      return;
+    }
+
     const payload = {
       scope: proposalForm.scope || null,
       stages: proposalForm.stages || null,
@@ -378,6 +430,7 @@ export default function AdminProjectHub() {
       terms: proposalForm.terms || null,
       status: "sent",
       sent_at: new Date().toISOString(),
+      pdf_url: pdfUrl,
     };
     const res = proposal
       ? await supabase.from("proposals").update(payload).eq("id", proposal.id).select().single()
@@ -513,12 +566,7 @@ export default function AdminProjectHub() {
                 <p className="text-white/30 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selected.name}</p>
               </div>
               <div className="flex-shrink-0 flex items-center gap-3">
-                <select value={selected.stage ?? "Quotation"} onChange={e => updateStage(e.target.value)}
-                  disabled={updatingStage}
-                  className="bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-2 focus:outline-none focus:border-white/40 cursor-pointer disabled:opacity-50"
-                  style={{ fontFamily: "var(--font-inter)" }}>
-                  {stages.map(s => <option key={s} style={{ background: "#1e1e1e" }}>{s}</option>)}
-                </select>
+                <span className="text-white/50 text-xs border border-white/15 px-2.5 py-2" style={{ fontFamily: "var(--font-inter)" }}>{selected.stage ?? "Quotation"}</span>
                 <span className="text-white/30 text-xs border border-white/10 px-2.5 py-2 tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>
                   {selected.progress ?? stageProgress[selected.stage] ?? 0}%
                 </span>
@@ -527,7 +575,7 @@ export default function AdminProjectHub() {
 
             {/* Tabs */}
             <div className="flex border-b border-white/[0.08] mb-8">
-              {(["meetings", "milestones", "spaces", "proposal", "quotes"] as Tab[]).map(tab => (
+              {(["meetings", "milestones", "spaces", "proposal"] as Tab[]).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`px-5 py-3 text-xs tracking-widest transition-colors border-b-2 -mb-px ${activeTab === tab ? "border-white text-white" : "border-transparent text-white/30 hover:text-white/50"}`}
                   style={{ fontFamily: "var(--font-inter)" }}>
@@ -591,6 +639,13 @@ export default function AdminProjectHub() {
                         className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
                         style={{ fontFamily: "var(--font-inter)" }} />
                     </div>
+                    <div className="mb-4">
+                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Google Drive link <span className="text-white/15 normal-case tracking-normal">(optional)</span></label>
+                      <input type="url" value={meetingForm.drive_link} onChange={e => setMeetingForm(f => ({ ...f, drive_link: e.target.value }))}
+                        placeholder="https://drive.google.com/..."
+                        className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                        style={{ fontFamily: "var(--font-inter)" }} />
+                    </div>
                     <div className="mb-5">
                       <input ref={fileRef} type="file" multiple className="hidden" onChange={e => setAttachedFiles(Array.from(e.target.files ?? []))} />
                       <button type="button" onClick={() => fileRef.current?.click()}
@@ -626,23 +681,9 @@ export default function AdminProjectHub() {
                           {i < meetings.length - 1 && <div className="w-px flex-1 mt-2 bg-white/10" style={{ minHeight: "32px" }} />}
                         </div>
                         <div className={`flex-1 mb-8 border ${m.status !== "Approved" ? "border-white/20" : "border-white/[0.08]"} bg-[#161616] p-6`}>
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <div>
-                              <h3 className="text-white text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>{m.title}</h3>
-                              <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{m.date} · {m.time} · {m.type}</p>
-                            </div>
-                            {m.status === "Approved" ? (
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                <span className="flex items-center gap-1.5 text-white/40 text-xs border border-white/10 px-2.5 py-1" style={{ fontFamily: "var(--font-inter)" }}>
-                                  <CheckIcon /> Client approved
-                                </span>
-                                <button onClick={() => unapprove(m.id)}
-                                  className="text-white/20 text-xs border border-white/10 px-2.5 py-1 hover:border-white/30 hover:text-white/50 transition-colors"
-                                  style={{ fontFamily: "var(--font-inter)" }}>Unapprove</button>
-                              </div>
-                            ) : (
-                              <span className="text-amber-400/60 text-xs border border-amber-400/20 px-2.5 py-1 flex-shrink-0" style={{ fontFamily: "var(--font-inter)" }}>Awaiting approval</span>
-                            )}
+                          <div className="mb-3">
+                            <h3 className="text-white text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>{m.title}</h3>
+                            <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{m.date} · {m.time} · {m.type}</p>
                           </div>
                           {m.summary && <p className="text-white/50 text-xs leading-relaxed mb-4" style={{ fontFamily: "var(--font-inter)" }}>{m.summary}</p>}
                           {m.decisions?.length > 0 && (
@@ -672,33 +713,10 @@ export default function AdminProjectHub() {
                               ))}
                             </div>
                           )}
-                          {m.client_comment && (
-                            <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                              <p className="text-white/20 text-xs tracking-widest mb-1" style={{ fontFamily: "var(--font-inter)" }}>CLIENT COMMENT</p>
-                              <p className="text-white/50 text-xs leading-relaxed mb-4" style={{ fontFamily: "var(--font-inter)" }}>{m.client_comment}</p>
-                              {m.admin_reply ? (
-                                <div className="bg-white/[0.03] border border-white/[0.06] px-4 py-3 mb-3">
-                                  <p className="text-white/20 text-xs tracking-widest mb-1" style={{ fontFamily: "var(--font-inter)" }}>YOUR REPLY</p>
-                                  <p className="text-white/50 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{m.admin_reply}</p>
-                                  <button onClick={() => setReplies(r => ({ ...r, [m.id]: m.admin_reply ?? "" }))}
-                                    className="text-white/20 text-xs hover:text-white/40 transition-colors mt-2"
-                                    style={{ fontFamily: "var(--font-inter)" }}>Edit reply</button>
-                                </div>
-                              ) : null}
-                              {(!m.admin_reply || replies[m.id] !== undefined) && (
-                                <div>
-                                  <textarea value={replies[m.id] ?? ""} onChange={e => setReplies(r => ({ ...r, [m.id]: e.target.value }))}
-                                    placeholder="Write a reply to the client..." rows={2}
-                                    className="w-full bg-transparent border border-white/10 text-white/60 text-xs px-3 py-2.5 focus:outline-none focus:border-white/30 transition-colors placeholder-white/20 resize-none mb-2"
-                                    style={{ fontFamily: "var(--font-inter)" }} />
-                                  <button onClick={() => submitReply(m.id)} disabled={savingReply === m.id || !replies[m.id]?.trim()}
-                                    className="px-4 py-2 border border-white/20 text-white/50 text-xs hover:border-white/50 hover:text-white/70 transition-colors disabled:opacity-30"
-                                    style={{ fontFamily: "var(--font-inter)" }}>
-                                    {savingReply === m.id ? "Sending..." : "Send Reply"}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
+                          {m.drive_link && (
+                            <a href={m.drive_link} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02] text-white/50 text-xs hover:text-white/80 hover:border-white/20 transition-colors"
+                              style={{ fontFamily: "var(--font-inter)" }}>Drive link ↗</a>
                           )}
                         </div>
                       </div>
@@ -788,9 +806,12 @@ export default function AdminProjectHub() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex items-center gap-2 mb-0.5">
-                                <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{m.name}</p>
+                                <p className={`text-sm ${m.status === "Skipped" ? "text-white/25" : "text-white/80"}`} style={{ fontFamily: "var(--font-inter)" }}>{m.name}</p>
                                 {(m.name === "Mood Board" || m.name === "2D") && (
                                   <span className="text-[10px] tracking-widest text-amber-400/60 border border-amber-400/20 px-1.5 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>DELIVERED TOGETHER</span>
+                                )}
+                                {m.status === "Skipped" && (
+                                  <span className="text-[10px] tracking-widest text-white/25 border border-white/10 px-1.5 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>Skipped</span>
                                 )}
                               </div>
                               {m.description && <p className="text-white/30 text-xs mb-1" style={{ fontFamily: "var(--font-inter)" }}>{m.description}</p>}
@@ -1039,6 +1060,13 @@ export default function AdminProjectHub() {
                       <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TERMS &amp; CONDITIONS</p>
                       <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.terms || "—"}</p>
                     </div>
+                    {proposal?.pdf_url && (
+                      <div className="pt-2">
+                        <a href={proposal.pdf_url} target="_blank" rel="noopener noreferrer"
+                          className="inline-block px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+                          style={{ fontFamily: "var(--font-inter)" }}>Download quotation (PDF)</a>
+                      </div>
+                    )}
                   </div>
                 )}
               </>

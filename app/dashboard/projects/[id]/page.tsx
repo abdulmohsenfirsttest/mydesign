@@ -9,7 +9,7 @@ type Milestone = { id: string; name: string; description: string | null; status:
 type Quote = { id: string; title: string; status: string; lines: { item: string; amount: string }[]; files: { name: string; size: string; url: string }[]; created_at: string };
 type FileRow = { id: string; name: string; size: string; url: string; created_at: string };
 type Space = { id: string; name: string; sqm: string; sort_order: number };
-type Proposal = { id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string };
+type Proposal = { id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string; pdf_url: string | null };
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -286,6 +286,17 @@ export default function ProjectDetailPage() {
                   </div>
                 ) : null)}
               </div>
+
+              {proposal.pdf_url && (
+                <div className="mt-6">
+                  <a href={proposal.pdf_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 py-2.5 px-3 border border-white/[0.06] bg-white/[0.02] text-white/50 hover:text-white/80 hover:border-white/15 transition-colors"
+                    style={{ fontFamily: "var(--font-inter)" }}>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span className="text-xs tracking-wide">Download quotation (PDF)</span>
+                  </a>
+                </div>
+              )}
 
               {proposal.status === "sent" && (
                 <div className="mt-6 pt-5 border-t border-white/[0.08]">
