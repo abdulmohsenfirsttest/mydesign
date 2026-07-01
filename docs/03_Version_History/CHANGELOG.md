@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.1.0 | 2026-07-01 | MINOR | Email-or-phone login (one portal for clients + team); team staff accounts (Tuqa manager + 4 designers) |
 | v4.0.0 | 2026-07-01 | MAJOR — new era | Meeting-3 full workflow: staff roles, internal price/sqm + manager approval, client proposal (approve/reject), milestone delivery rules |
 | v3.4.0 | 2026-06-30 | MINOR | Operational backbone: automated nightly Supabase backups (→ Drive) + bug log + backups doc |
 | v3.3.0 | 2026-06-29 | MINOR | Meeting-3 Increment 1: 6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/` |
@@ -117,6 +118,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** migration `0002_meeting3_workflow` — `admins.role`; `projects.service/track/designer_id/pm_id`; `internal_quotes` (staff-only, unique per project) + `proposals` tables; `milestones.files/bundle`; realtime for the two new tables. Applied to prod.
 - **Decision:** **MAJOR** — new roles + data model = a new era. Enforcement is client-side (localStorage roles), matching ADR-0001; true server-side/RLS hiding of the internal price is Security Phase 2 (see **ADR-0010**).
 
+### v4.1.0 · Email-or-phone login + team staff accounts
+- **What:** `/auth/login` matches by **email OR phone** for both staff and clients (two safe `.eq()` lookups, not a string-built `.or()`); `admins` gains `email` and `phone` becomes optional; the Staff page captures email. Seeded the team — **Tuqa** (manager/team-lead), **Hiba · Mohammed · Esra · Raneem** (designers) `@mysaudi.co`, default password `123123`.
+- **Why:** the team signs in with work emails; clients keep phone — one portal, either identifier.
+- **Schema:** migration `0003_staff_email_login` (`admins.email`; `admins.phone` nullable; unique `lower(email)`).
+- **Decision:** MINOR. (Tuqa mapped to `manager` — the app's only oversight role; a dedicated `team_leader` role is a future option.)
+
 ---
 
 ## Version → commit map
@@ -136,6 +143,7 @@ v3.2.0  7e3c7c8   (committed 2026-06-29, together with v3.3.0)
 v3.3.0  7e3c7c8   (tag v3.3.0 — Meeting-3 Increment 1)
 v3.4.0  08e9958   (tag v3.4.0 — operational backbone: backups + bug log)
 v4.0.0  de19920   (tag v4.0.0 — Meeting-3 full workflow: roles/pricing/proposals/delivery)
+v4.1.0  1df2d06   (tag v4.1.0 — email-or-phone login + team staff accounts)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06`

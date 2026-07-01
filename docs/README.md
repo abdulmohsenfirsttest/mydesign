@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.0.0` — **new era:** the full Meeting-3 workflow (staff roles, internal price/sqm + manager approval, client proposals with approve/reject, milestone delivery rules). Committed `de19920`, deployed. Enforcement is client-side; true price-hiding is Security Phase 2 (see ADR-0010).
-- **Last session record:** `SES-2026-004`
-- **Next session record:** `SES-2026-005`
+- **Current version:** `v4.1.0` — email-or-phone login (one portal for clients + team) + team staff accounts, on top of the v4.0.0 Meeting-3 workflow (roles, internal pricing, proposals, delivery). Committed `1df2d06`, deployed. Enforcement is client-side; true price-hiding is Security Phase 2 (see ADR-0010).
+- **Last session record:** `SES-2026-005`
+- **Next session record:** `SES-2026-006`
 
 ---
 
