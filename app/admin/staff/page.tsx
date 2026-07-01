@@ -4,14 +4,14 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getAdmin, ROLES, roleLabel, type Role } from "@/lib/roles";
 
-type Staff = { id: string; name: string; phone: string; role: string; created_at: string };
+type Staff = { id: string; name: string; email: string | null; phone: string | null; role: string; created_at: string };
 
 export default function StaffPage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<{ name: string; phone: string; password: string; role: Role }>({ name: "", phone: "", password: "123123", role: "designer" });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; password: string; role: Role }>({ name: "", email: "", phone: "", password: "123123", role: "designer" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -25,19 +25,20 @@ export default function StaffPage() {
   }, [router]);
 
   function fetchStaff() {
-    supabase.from("admins").select("id, name, phone, role, created_at").order("created_at")
+    supabase.from("admins").select("id, name, email, phone, role, created_at").order("created_at")
       .then(({ data }) => setStaff((data as Staff[]) ?? []));
   }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!form.email.trim() && !form.phone.trim()) { setError("Add an email or a phone so they can sign in."); return; }
     setSaving(true);
     const { error: err } = await supabase.from("admins").insert({
-      name: form.name, phone: form.phone.trim(), password: form.password, role: form.role,
+      name: form.name, email: form.email.trim() || null, phone: form.phone.trim() || null, password: form.password, role: form.role,
     });
     if (err) { setError(err.message); setSaving(false); return; }
-    setForm({ name: "", phone: "", password: "123123", role: "designer" });
+    setForm({ name: "", email: "", phone: "", password: "123123", role: "designer" });
     setSaving(false);
     setShowForm(false);
     fetchStaff();
@@ -87,10 +88,17 @@ export default function StaffPage() {
                 className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
                 style={{ fontFamily: "var(--font-inter)" }} />
             </div>
+            <div>
+              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email (login)</label>
+              <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                placeholder="name@mysaudi.co"
+                className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                style={{ fontFamily: "var(--font-inter)" }} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone (login)</label>
-                <input required value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone (optional)</label>
+                <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   placeholder="05xxxxxxxx"
                   className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
                   style={{ fontFamily: "var(--font-inter)" }} />
@@ -133,7 +141,7 @@ export default function StaffPage() {
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold" style={{ fontFamily: "var(--font-inter)" }}>{(s.name?.[0] ?? "?").toUpperCase()}</div>
                 <div>
                   <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{s.name}</p>
-                  <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.phone}</p>
+                  <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.email || s.phone || "—"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -17,13 +17,13 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    // Admins can sign in from this same portal.
-    const { data: admin } = await supabase
-      .from("admins")
-      .select("id, name, role")
-      .eq("phone", phone.trim())
-      .eq("password", password)
-      .single();
+    const id = phone.trim();
+
+    // Everyone signs in from this one portal, by EMAIL or PHONE. We look up by
+    // phone then email with separate .eq() calls (values are safely encoded) —
+    // never a string-built .or() filter, which would be injectable.
+    let admin = (await supabase.from("admins").select("id, name, role").eq("phone", id).eq("password", password).maybeSingle()).data;
+    if (!admin) admin = (await supabase.from("admins").select("id, name, role").eq("email", id).eq("password", password).maybeSingle()).data;
 
     if (admin) {
       localStorage.setItem("admin_session", "true");
@@ -34,21 +34,17 @@ function LoginForm() {
       return;
     }
 
-    const { data, error: dbError } = await supabase
-      .from("clients")
-      .select("id, name")
-      .eq("phone", phone.trim())
-      .eq("password", password)
-      .single();
+    let client = (await supabase.from("clients").select("id, name").eq("phone", id).eq("password", password).maybeSingle()).data;
+    if (!client) client = (await supabase.from("clients").select("id, name").eq("email", id).eq("password", password).maybeSingle()).data;
 
-    if (dbError || !data) {
-      setError("Incorrect phone number or password.");
+    if (!client) {
+      setError("Incorrect email/phone or password.");
       setLoading(false);
       return;
     }
 
-    localStorage.setItem("client_id", data.id);
-    localStorage.setItem("client_name", data.name);
+    localStorage.setItem("client_id", client.id);
+    localStorage.setItem("client_name", client.name);
     router.push("/dashboard");
   }
 
@@ -62,14 +58,14 @@ function LoginForm() {
           <span className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-inter)" }}>Design & Build</span>
         </Link>
 
-        <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Client Portal</h1>
-        <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Sign in to access your project portal.</p>
+        <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Sign In</h1>
+        <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Clients and team — sign in with your email or phone.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-white/40 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone Number</label>
-            <input type="tel" required value={phone} onChange={e => setPhone(e.target.value)}
-              placeholder="e.g. 0547080147"
+            <label className="block text-xs text-white/40 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email or Phone</label>
+            <input type="text" required value={phone} onChange={e => setPhone(e.target.value)}
+              placeholder="email@mysaudi.co or 05xxxxxxxx"
               className="w-full bg-transparent border border-white/20 text-white text-sm px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
               style={{ fontFamily: "var(--font-inter)" }} />
           </div>
