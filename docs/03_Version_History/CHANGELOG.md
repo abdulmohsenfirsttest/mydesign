@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.3.0 | 2026-07-01 | MINOR | Hub polish: meetings staff-internal + Drive link; proposal PDF (15% VAT) to the client; milestone "Skipped"; removed Quotes tab + stage dropdown |
 | v4.2.0 | 2026-07-01 | MINOR | Owner-configurable per-account permissions (what each account can see); Staff → Staff & Permissions |
 | v4.1.0 | 2026-07-01 | MINOR | Email-or-phone login (one portal for clients + team); team staff accounts (Tuqa manager + 4 designers) |
 | v4.0.0 | 2026-07-01 | MAJOR — new era | Meeting-3 full workflow: staff roles, internal price/sqm + manager approval, client proposal (approve/reject), milestone delivery rules |
@@ -131,6 +132,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** migration `0004_account_permissions` (`admins.permissions jsonb`).
 - **Decision:** MINOR. Enforcement is client-side (ADR-0001/0010) — the UI access control is real; the security boundary is Phase 2.
 
+### v4.3.0 · Hub polish — meetings internal, proposal PDF, milestone Skipped
+- **What:** Meetings are now **staff-internal** (client no longer sees/approves them; client Messages page + nav removed) with an optional **Google Drive link**. Sending a proposal generates a **quotation PDF with 15% VAT** (jsPDF) attached to the proposal for the client to download alongside Approve/Reject. Milestones gain a **"Skipped"** status. Removed the **Quotes tab** and the manual **stage dropdown** (stage badge is read-only; advances on proposal approval).
+- **Why:** the owner's annotated review screenshots.
+- **Schema:** migration `0005_proposal_pdf_meeting_drive` (`proposals.pdf_url`, `meetings.drive_link`); added `jspdf`.
+- **Decision:** MINOR. Built with two parallel agents (hub + client-side).
+
 ---
 
 ## Version → commit map
@@ -152,6 +159,7 @@ v3.4.0  08e9958   (tag v3.4.0 — operational backbone: backups + bug log)
 v4.0.0  de19920   (tag v4.0.0 — Meeting-3 full workflow: roles/pricing/proposals/delivery)
 v4.1.0  1df2d06   (tag v4.1.0 — email-or-phone login + team staff accounts)
 v4.2.0  7fec31f   (tag v4.2.0 — owner-configurable per-account permissions)
+v4.3.0  2d7fc72   (tag v4.3.0 — hub polish: meetings internal, proposal PDF w/ VAT, milestone Skipped)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72`

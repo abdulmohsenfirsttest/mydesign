@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.2.0` — owner-configurable per-account permissions (the owner sets which admin sections each account can see), on top of v4.1.0 (email-or-phone login + team) and the v4.0.0 Meeting-3 workflow. Committed `7fec31f`, deployed. Enforcement is client-side; true enforcement is Security Phase 2 (see ADR-0010).
-- **Last session record:** `SES-2026-006`
-- **Next session record:** `SES-2026-007`
+- **Current version:** `v4.3.0` — hub polish: meetings are staff-internal (+ Drive link), the proposal carries a quotation **PDF with 15% VAT** to the client, milestones gain a **"Skipped"** status; removed the Quotes tab + manual stage dropdown. Committed `2d7fc72`, deployed. (On top of v4.2.0 permissions / v4.0.0 Meeting-3 workflow; enforcement client-side, Security Phase 2 pending — ADR-0010.)
+- **Last session record:** `SES-2026-007`
+- **Next session record:** `SES-2026-008`
 
 ---
 
