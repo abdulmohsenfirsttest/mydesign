@@ -20,7 +20,7 @@ function LoginForm() {
     // Admins can sign in from this same portal.
     const { data: admin } = await supabase
       .from("admins")
-      .select("id, name")
+      .select("id, name, role")
       .eq("phone", phone.trim())
       .eq("password", password)
       .single();
@@ -29,6 +29,7 @@ function LoginForm() {
       localStorage.setItem("admin_session", "true");
       localStorage.setItem("admin_id", admin.id);
       localStorage.setItem("admin_name", admin.name);
+      localStorage.setItem("admin_role", admin.role ?? "manager");
       router.push("/admin");
       return;
     }

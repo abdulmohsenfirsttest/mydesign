@@ -81,7 +81,7 @@ async function dumpTable(table) {
 // PostgREST's OpenAPI spec only lists what the current key can see; the anon key
 // returns an empty spec, so fall back to the known MyDesign table list. (Keep
 // this list in sync with supabase/migrations/ when tables are added.)
-const KNOWN_TABLES = ['admins', 'bookings', 'clients', 'files', 'meetings', 'milestones', 'projects', 'quotes', 'spaces'];
+const KNOWN_TABLES = ['admins', 'bookings', 'clients', 'files', 'internal_quotes', 'meetings', 'milestones', 'projects', 'proposals', 'quotes', 'spaces'];
 let tables = await discoverTables();
 if (!tables.length) {
   console.log('  (table discovery empty for this key — using the known MyDesign table list)');

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { getAdmin } from "@/lib/roles";
 
 type Meeting = {
   id: string; title: string; date: string; time: string; type: string;
@@ -10,12 +11,14 @@ type Meeting = {
   project_id: string;
 };
 type Project = { id: string; name: string; client_name: string; client_id: string; stage: string; progress: number };
-type Milestone = { id: string; name: string; description: string | null; status: string; start_date: string | null; end_date: string | null; due_date: string | null; sort_order: number };
+type Milestone = { id: string; name: string; description: string | null; status: string; start_date: string | null; end_date: string | null; due_date: string | null; sort_order: number; files: { name: string; size: string; url: string }[]; bundle: string | null };
 type Space = { id: string; name: string; sqm: number; sort_order: number };
 type QuoteLine = { item: string; amount: string };
 type QuoteFile = { name: string; size: string; url: string };
 type Quote = { id: string; title: string; status: string; lines: QuoteLine[]; files: QuoteFile[]; created_at: string };
-type Tab = "meetings" | "milestones" | "spaces" | "quotes";
+type InternalQuote = { id: string; project_id: string; sqm_total: number; price_per_sqm: number | null; total: number | null; status: string; requested_by: string | null; approved_by: string | null; created_at: string; approved_at: string | null };
+type Proposal = { id: string; project_id: string; scope: string | null; stages: string | null; pricing: string | null; terms: string | null; status: string; client_comment: string | null; sent_at: string | null; decided_at: string | null; created_at: string };
+type Tab = "meetings" | "milestones" | "spaces" | "proposal" | "quotes";
 
 const meetingTypes = ["In-Person", "Video Call", "Phone Call", "Site Visit"];
 const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
@@ -80,14 +83,40 @@ export default function AdminProjectHub() {
   const [quoteSaved, setQuoteSaved] = useState(false);
   const quoteFileRef = useRef<HTMLInputElement>(null);
 
+  // Internal quote (staff-only pricing from the Manager)
+  const [internalQuote, setInternalQuote] = useState<InternalQuote | null>(null);
+  const [requestingPricing, setRequestingPricing] = useState(false);
+  const [pricingError, setPricingError] = useState("");
+
+  // Proposal builder
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [proposalForm, setProposalForm] = useState({ scope: "", stages: "", pricing: "", terms: "" });
+  const [savingProposal, setSavingProposal] = useState(false);
+  const [proposalError, setProposalError] = useState("");
+  const [proposalSaved, setProposalSaved] = useState(false);
+
+  // Milestone deliverables
+  const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
+  const [milestoneUploadError, setMilestoneUploadError] = useState<Record<string, string>>({});
+
   // Stage
   const [updatingStage, setUpdatingStage] = useState(false);
   const [deletingProject, setDeletingProject] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("projects").select("id, name, stage, progress, clients(id, name)").then(({ data }) => {
-      const list = ((data ?? []) as unknown as { id: string; name: string; stage: string | null; progress: number | null; clients: { id: string; name: string } | null }[]).map((p) => ({
+    const me = getAdmin();
+    supabase.from("projects").select("id, name, stage, progress, track, designer_id, pm_id, clients(id, name)").then(({ data }) => {
+      const rows = ((data ?? []) as unknown as { id: string; name: string; stage: string | null; progress: number | null; track: string | null; designer_id: string | null; pm_id: string | null; clients: { id: string; name: string } | null }[]);
+      // Role-scope the hub the same way the projects list does: a designer sees only
+      // their assigned projects, a project_manager the management track, a manager all.
+      const visible = rows.filter((p) => {
+        if (!me || me.role === "manager") return true;
+        if (me.role === "designer") return p.designer_id === me.id;
+        if (me.role === "project_manager") return p.track === "management" || p.pm_id === me.id;
+        return true;
+      });
+      const list = visible.map((p) => ({
         id: p.id, name: p.name,
         client_name: p.clients?.name ?? "—",
         client_id: p.clients?.id ?? "",
@@ -116,6 +145,18 @@ export default function AdminProjectHub() {
     supabase.from("quotes").select("*").eq("project_id", selectedId!).order("created_at", { ascending: false })
       .then(({ data }) => setQuotes((data as Quote[]) ?? []));
   }
+  function fetchInternalQuote() {
+    supabase.from("internal_quotes").select("*").eq("project_id", selectedId!).order("created_at", { ascending: false }).limit(1)
+      // numeric columns come back from PostgREST as strings — coerce the pricing fields to real numbers.
+      .then(({ data }) => {
+        const q = (data as InternalQuote[] | null)?.[0] ?? null;
+        setInternalQuote(q ? { ...q, sqm_total: Number(q.sqm_total), price_per_sqm: q.price_per_sqm == null ? null : Number(q.price_per_sqm), total: q.total == null ? null : Number(q.total) } : null);
+      });
+  }
+  function fetchProposal() {
+    supabase.from("proposals").select("*").eq("project_id", selectedId!).order("created_at", { ascending: false }).limit(1)
+      .then(({ data }) => setProposal((data as Proposal[] | null)?.[0] ?? null));
+  }
 
   useEffect(() => {
     if (!selectedId) return;
@@ -123,6 +164,8 @@ export default function AdminProjectHub() {
     fetchMilestones();
     fetchSpaces();
     fetchQuotes();
+    fetchInternalQuote();
+    fetchProposal();
 
     const mc = supabase.channel(`hub-meetings-${selectedId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "meetings", filter: `project_id=eq.${selectedId}` }, fetchMeetings)
@@ -136,14 +179,32 @@ export default function AdminProjectHub() {
     const qc = supabase.channel(`hub-quotes-${selectedId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "quotes", filter: `project_id=eq.${selectedId}` }, fetchQuotes)
       .subscribe();
+    const iqc = supabase.channel(`hub-internal-quotes-${selectedId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "internal_quotes", filter: `project_id=eq.${selectedId}` }, fetchInternalQuote)
+      .subscribe();
+    const pc = supabase.channel(`hub-proposals-${selectedId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "proposals", filter: `project_id=eq.${selectedId}` }, fetchProposal)
+      .subscribe();
 
     return () => {
       supabase.removeChannel(mc);
       supabase.removeChannel(mlc);
       supabase.removeChannel(sc);
       supabase.removeChannel(qc);
+      supabase.removeChannel(iqc);
+      supabase.removeChannel(pc);
     };
   }, [selectedId]);
+
+  // Keep the proposal builder textareas in sync with the loaded proposal (per project).
+  useEffect(() => {
+    setProposalForm({
+      scope: proposal?.scope ?? "",
+      stages: proposal?.stages ?? "",
+      pricing: proposal?.pricing ?? "",
+      terms: proposal?.terms ?? "",
+    });
+  }, [proposal, selectedId]);
 
   async function handleAddMeeting(e: React.FormEvent) {
     e.preventDefault();
@@ -206,6 +267,11 @@ export default function AdminProjectHub() {
       setMilestoneError("End date must be on or after the start date.");
       return;
     }
+    // Delivery rule: a milestone can't be created as Completed — it has no deliverable yet.
+    if (milestoneForm.status === "Completed") {
+      setMilestoneError("A new milestone can't start as Completed — create it, attach a deliverable, then mark it Completed.");
+      return;
+    }
     setMilestoneError("");
     setSavingMilestone(true);
     const { data, error } = await supabase.from("milestones").insert({
@@ -225,10 +291,31 @@ export default function AdminProjectHub() {
   }
 
   async function updateMilestoneStatus(id: string, status: string) {
+    const ms = milestones.find(x => x.id === id);
+    // Meeting-3 delivery rule: a milestone cannot be marked Completed without at least one deliverable.
+    if (status === "Completed" && !((ms?.files ?? []).length > 0)) {
+      setMilestoneUploadError(e => ({ ...e, [id]: "Attach at least one deliverable before marking this milestone Completed." }));
+      return;
+    }
     setUpdatingStatus(id);
-    await supabase.from("milestones").update({ status }).eq("id", id);
+    const { error } = await supabase.from("milestones").update({ status }).eq("id", id);
+    if (error) { setMilestoneUploadError(e => ({ ...e, [id]: error.message })); setUpdatingStatus(null); return; }
     setMilestones(prev => prev.map(m => m.id === id ? { ...m, status } : m));
     setUpdatingStatus(null);
+  }
+
+  async function handleMilestoneUpload(m: Milestone, file: File) {
+    setMilestoneUploadError(e => ({ ...e, [m.id]: "" }));
+    setUploadingMilestone(m.id);
+    const path = `${selectedId}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from("files").upload(path, file);
+    if (upErr) { setMilestoneUploadError(e => ({ ...e, [m.id]: upErr.message })); setUploadingMilestone(null); return; }
+    const { data: urlData } = supabase.storage.from("files").getPublicUrl(path);
+    const nextFiles = [...(m.files ?? []), { name: file.name, size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`, url: urlData.publicUrl }];
+    const { error } = await supabase.from("milestones").update({ files: nextFiles }).eq("id", m.id);
+    if (error) { setMilestoneUploadError(e => ({ ...e, [m.id]: error.message })); setUploadingMilestone(null); return; }
+    setMilestones(prev => prev.map(x => x.id === m.id ? { ...x, files: nextFiles } : x));
+    setUploadingMilestone(null);
   }
 
   async function deleteMilestone(id: string) {
@@ -263,6 +350,44 @@ export default function AdminProjectHub() {
   }
 
   const spacesTotal = spaces.reduce((sum, s) => sum + (Number(s.sqm) || 0), 0);
+
+  async function requestPricing() {
+    if (!selectedId || internalQuote) return;
+    setPricingError("");
+    setRequestingPricing(true);
+    const { data, error } = await supabase.from("internal_quotes").insert({
+      project_id: selectedId, sqm_total: spacesTotal, status: "pending", requested_by: getAdmin()?.id ?? null,
+    }).select().single();
+    if (error) { setPricingError(error.message); setRequestingPricing(false); return; }
+    if (data) {
+      const q = data as InternalQuote;
+      setInternalQuote({ ...q, sqm_total: Number(q.sqm_total), price_per_sqm: q.price_per_sqm == null ? null : Number(q.price_per_sqm), total: q.total == null ? null : Number(q.total) });
+    }
+    setRequestingPricing(false);
+  }
+
+  async function saveProposal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedId) return;
+    setProposalError("");
+    setSavingProposal(true);
+    const payload = {
+      scope: proposalForm.scope || null,
+      stages: proposalForm.stages || null,
+      pricing: proposalForm.pricing || null,
+      terms: proposalForm.terms || null,
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    };
+    const res = proposal
+      ? await supabase.from("proposals").update(payload).eq("id", proposal.id).select().single()
+      : await supabase.from("proposals").insert({ project_id: selectedId, ...payload }).select().single();
+    if (res.error) { setProposalError(res.error.message); setSavingProposal(false); return; }
+    if (res.data) setProposal(res.data as Proposal);
+    setSavingProposal(false);
+    setProposalSaved(true);
+    setTimeout(() => setProposalSaved(false), 1500);
+  }
 
   async function handleAddQuote(e: React.FormEvent) {
     e.preventDefault();
@@ -343,6 +468,8 @@ export default function AdminProjectHub() {
   }
 
   const selected = projects.find(p => p.id === selectedId);
+  const quoteApproved = internalQuote?.status === "approved";
+  const proposalEditable = !proposal || proposal.status === "draft" || proposal.status === "rejected";
 
   const milestoneStatusDot = (status: string) =>
     status === "Completed" ? "bg-white border-white" :
@@ -362,7 +489,7 @@ export default function AdminProjectHub() {
             <p className="px-5 py-4 text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No projects yet.</p>
           ) : projects.map(p => (
             <div key={p.id} className={`flex items-center border-b border-white/[0.06] hover:bg-white/[0.03] transition-colors ${selectedId === p.id ? "bg-white/[0.05]" : ""}`}>
-              <button onClick={() => { setSelectedId(p.id); setMeetings([]); setMilestones([]); setSpaces([]); setQuotes([]); setShowMeetingForm(false); setShowMilestoneForm(false); setShowSpaceForm(false); setShowQuoteForm(false); setMilestoneError(""); setSpaceError(""); }}
+              <button onClick={() => { setSelectedId(p.id); setMeetings([]); setMilestones([]); setSpaces([]); setQuotes([]); setInternalQuote(null); setProposal(null); setShowMeetingForm(false); setShowMilestoneForm(false); setShowSpaceForm(false); setShowQuoteForm(false); setMilestoneError(""); setSpaceError(""); setPricingError(""); setProposalError(""); setMilestoneUploadError({}); }}
                 className="flex-1 text-left px-5 py-4">
                 <p className="text-white/70 text-xs mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{p.client_name}</p>
                 <p className="text-white/25 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{p.name}</p>
@@ -400,7 +527,7 @@ export default function AdminProjectHub() {
 
             {/* Tabs */}
             <div className="flex border-b border-white/[0.08] mb-8">
-              {(["meetings", "milestones", "spaces", "quotes"] as Tab[]).map(tab => (
+              {(["meetings", "milestones", "spaces", "proposal", "quotes"] as Tab[]).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)}
                   className={`px-5 py-3 text-xs tracking-widest transition-colors border-b-2 -mb-px ${activeTab === tab ? "border-white text-white" : "border-transparent text-white/30 hover:text-white/50"}`}
                   style={{ fontFamily: "var(--font-inter)" }}>
@@ -660,7 +787,12 @@ export default function AdminProjectHub() {
                         <div className="flex-1 mb-6 border border-white/[0.08] bg-[#161616] p-5">
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-white/80 text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{m.name}</p>
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{m.name}</p>
+                                {(m.name === "Mood Board" || m.name === "2D") && (
+                                  <span className="text-[10px] tracking-widest text-amber-400/60 border border-amber-400/20 px-1.5 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>DELIVERED TOGETHER</span>
+                                )}
+                              </div>
                               {m.description && <p className="text-white/30 text-xs mb-1" style={{ fontFamily: "var(--font-inter)" }}>{m.description}</p>}
                               {(m.start_date && m.end_date)
                                 ? <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{fmtDate(m.start_date)} – {fmtDate(m.end_date)}</p>
@@ -671,13 +803,42 @@ export default function AdminProjectHub() {
                                 disabled={updatingStatus === m.id}
                                 className={`bg-transparent border text-xs px-2 py-1 focus:outline-none cursor-pointer ${m.status === "Completed" ? "border-white/20 text-white/40" : m.status === "In Progress" ? "border-amber-400/30 text-amber-400/60" : "border-white/10 text-white/20"}`}
                                 style={{ fontFamily: "var(--font-inter)" }}>
-                                {milestoneStatuses.map(s => <option key={s} style={{ background: "#161616" }}>{s}</option>)}
+                                {milestoneStatuses.map(s => <option key={s} disabled={s === "Completed" && (m.files ?? []).length === 0} style={{ background: "#161616" }}>{s}</option>)}
                               </select>
                               <button onClick={() => deleteMilestone(m.id)} disabled={deletingMilestone === m.id}
                                 className="text-red-400/30 hover:text-red-400/70 transition-colors disabled:opacity-30">
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                               </button>
                             </div>
+                          </div>
+                          {/* Deliverables — required before a milestone can be marked Completed (Meeting-3 delivery rule). */}
+                          <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                            <p className="text-white/20 text-xs tracking-widest mb-2" style={{ fontFamily: "var(--font-inter)" }}>DELIVERABLES</p>
+                            {(m.files ?? []).length > 0 ? (
+                              <div className="space-y-2 mb-3">
+                                {(m.files ?? []).map((f, j) => (
+                                  <div key={j} className="flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02]">
+                                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    <span className="flex-1 text-white/50 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</span>
+                                    <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.size}</span>
+                                    <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors ml-1">
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                    </a>
+                                    <button onClick={() => downloadFile(f.url, f.name, "files")} className="text-white/20 hover:text-white/60 transition-colors">
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-white/20 text-xs mb-3" style={{ fontFamily: "var(--font-inter)" }}>No deliverable attached yet — required before this milestone can be marked Completed.</p>
+                            )}
+                            <label className="inline-block text-xs border border-white/15 text-white/30 px-4 py-2 hover:border-white/30 hover:text-white/50 transition-colors cursor-pointer" style={{ fontFamily: "var(--font-inter)" }}>
+                              {uploadingMilestone === m.id ? "Uploading..." : "Attach deliverable"}
+                              <input type="file" className="hidden" disabled={uploadingMilestone === m.id}
+                                onChange={e => { const file = e.target.files?.[0]; if (file) handleMilestoneUpload(m, file); e.target.value = ""; }} />
+                            </label>
+                            {milestoneUploadError[m.id] && <p className="text-red-400/70 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>{milestoneUploadError[m.id]}</p>}
                           </div>
                         </div>
                       </div>
@@ -754,6 +915,129 @@ export default function AdminProjectHub() {
                     <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/[0.12]">
                       <span className="text-white/40 text-xs tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL</span>
                       <span className="text-white text-sm tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>{spacesTotal.toLocaleString("en-US")} sqm</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Request internal pricing from the Manager (staff-only price stays inside the hub). */}
+                <div className="mt-6 border border-white/[0.08] bg-[#161616] p-6">
+                  <p className="text-xs text-white/30 mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>INTERNAL PRICING</p>
+                  {!internalQuote ? (
+                    <>
+                      <button type="button" onClick={requestPricing} disabled={requestingPricing || spaces.length === 0}
+                        className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                        style={{ fontFamily: "var(--font-inter)" }}>
+                        {requestingPricing ? "Requesting..." : "Request pricing from Manager"}
+                      </button>
+                      {spaces.length === 0 && <p className="text-white/20 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>Add at least one space first.</p>}
+                      {pricingError && <p className="text-red-400/70 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>{pricingError}</p>}
+                    </>
+                  ) : internalQuote.status === "approved" ? (
+                    <p className="text-white/70 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Priced: SAR {Number(internalQuote.price_per_sqm).toLocaleString("en-US")}/sqm → SAR {Number(internalQuote.total).toLocaleString("en-US")}</p>
+                  ) : (
+                    <p className="text-amber-400/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Pending manager pricing</p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ── PROPOSAL ── */}
+            {activeTab === "proposal" && (
+              <>
+                {/* Manager pricing gate — the proposal cannot be sent until the internal quote is approved. */}
+                <div className="border border-white/[0.08] bg-[#161616] p-5 mb-6">
+                  <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>MANAGER PRICING</p>
+                  {!internalQuote ? (
+                    <p className="text-white/40 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No pricing requested yet. Request pricing from the Spaces tab first.</p>
+                  ) : internalQuote.status === "approved" ? (
+                    <p className="text-white/70 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Approved · SAR {Number(internalQuote.price_per_sqm).toLocaleString("en-US")}/sqm → SAR {Number(internalQuote.total).toLocaleString("en-US")}</p>
+                  ) : (
+                    <p className="text-amber-400/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Pending manager pricing</p>
+                  )}
+                </div>
+
+                {proposal && (
+                  <div className="border border-white/[0.08] bg-[#161616] p-5 mb-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-white/40 text-xs tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROPOSAL STATUS</p>
+                      <span className={`text-xs px-2.5 py-1 border ${proposal.status === "approved" ? "border-white/50 text-white/70" : proposal.status === "rejected" ? "border-red-400/30 text-red-400/60" : proposal.status === "sent" ? "border-amber-400/30 text-amber-400/60" : "border-white/10 text-white/20"}`}
+                        style={{ fontFamily: "var(--font-inter)" }}>{proposal.status.toUpperCase()}</span>
+                    </div>
+                    {proposal.sent_at && <p className="text-white/25 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>Sent {new Date(proposal.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
+                    {(proposal.status === "approved" || proposal.status === "rejected") && (
+                      <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                        {proposal.client_comment && (
+                          <>
+                            <p className="text-white/20 text-xs tracking-widest mb-1" style={{ fontFamily: "var(--font-inter)" }}>CLIENT COMMENT</p>
+                            <p className="text-white/50 text-xs leading-relaxed mb-2" style={{ fontFamily: "var(--font-inter)" }}>{proposal.client_comment}</p>
+                          </>
+                        )}
+                        {proposal.decided_at && <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Decided {new Date(proposal.decided_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {proposalEditable ? (
+                  <form onSubmit={saveProposal} className="border border-white/[0.08] bg-[#161616] p-6">
+                    <h3 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>{proposal ? "EDIT PROPOSAL" : "NEW PROPOSAL"}</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Scope of Work</label>
+                        <textarea rows={4} value={proposalForm.scope} onChange={e => setProposalForm(f => ({ ...f, scope: e.target.value }))}
+                          placeholder="Define the scope of work..."
+                          className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
+                          style={{ fontFamily: "var(--font-inter)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Stages of Work</label>
+                        <textarea rows={4} value={proposalForm.stages} onChange={e => setProposalForm(f => ({ ...f, stages: e.target.value }))}
+                          placeholder="Mood Board → 2D → 3D → Plans → Delivery..."
+                          className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
+                          style={{ fontFamily: "var(--font-inter)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Pricing</label>
+                        <textarea rows={3} value={proposalForm.pricing} onChange={e => setProposalForm(f => ({ ...f, pricing: e.target.value }))}
+                          placeholder="Pricing breakdown, payment schedule..."
+                          className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
+                          style={{ fontFamily: "var(--font-inter)" }} />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Terms &amp; Conditions</label>
+                        <textarea rows={4} value={proposalForm.terms} onChange={e => setProposalForm(f => ({ ...f, terms: e.target.value }))}
+                          placeholder="Terms, timelines, cancellation policy..."
+                          className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 resize-none"
+                          style={{ fontFamily: "var(--font-inter)" }} />
+                      </div>
+                    </div>
+                    {proposalError && <p className="text-red-400/70 text-xs mt-4" style={{ fontFamily: "var(--font-inter)" }}>{proposalError}</p>}
+                    {!quoteApproved && <p className="text-amber-400/60 text-xs mt-4" style={{ fontFamily: "var(--font-inter)" }}>Waiting for manager pricing approval</p>}
+                    <div className="flex gap-3 mt-5">
+                      <button type="submit" disabled={savingProposal || !quoteApproved}
+                        className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                        style={{ fontFamily: "var(--font-inter)" }}>
+                        {savingProposal ? "Sending..." : proposalSaved ? "✓ Sent" : proposal?.status === "rejected" ? "Resend to client" : "Send to client"}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="border border-white/[0.08] bg-[#161616] p-6 space-y-5">
+                    <div>
+                      <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>SCOPE OF WORK</p>
+                      <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.scope || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>STAGES OF WORK</p>
+                      <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.stages || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PRICING</p>
+                      <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.pricing || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TERMS &amp; CONDITIONS</p>
+                      <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.terms || "—"}</p>
                     </div>
                   </div>
                 )}
