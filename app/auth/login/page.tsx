@@ -22,14 +22,15 @@ function LoginForm() {
     // Everyone signs in from this one portal, by EMAIL or PHONE. We look up by
     // phone then email with separate .eq() calls (values are safely encoded) —
     // never a string-built .or() filter, which would be injectable.
-    let admin = (await supabase.from("admins").select("id, name, role").eq("phone", id).eq("password", password).maybeSingle()).data;
-    if (!admin) admin = (await supabase.from("admins").select("id, name, role").eq("email", id).eq("password", password).maybeSingle()).data;
+    let admin = (await supabase.from("admins").select("id, name, role, permissions").eq("phone", id).eq("password", password).maybeSingle()).data;
+    if (!admin) admin = (await supabase.from("admins").select("id, name, role, permissions").eq("email", id).eq("password", password).maybeSingle()).data;
 
     if (admin) {
       localStorage.setItem("admin_session", "true");
       localStorage.setItem("admin_id", admin.id);
       localStorage.setItem("admin_name", admin.name);
       localStorage.setItem("admin_role", admin.role ?? "manager");
+      localStorage.setItem("admin_permissions", JSON.stringify(admin.permissions ?? null));
       router.push("/admin");
       return;
     }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { getAdmin, type AdminSession } from "@/lib/roles";
+import { getAdmin, canSee, type AdminSession } from "@/lib/roles";
 
 type PricingQuote = {
   id: string;
@@ -42,7 +42,7 @@ export default function PricingPage() {
     const a = getAdmin();
     if (!a) { router.replace("/auth/login"); return; }
     setAdmin(a);
-    if (a.role !== "manager") { setAuthorized(false); return; }
+    if (!canSee(a, "pricing")) { setAuthorized(false); return; }
     setAuthorized(true);
     fetchQuotes();
 

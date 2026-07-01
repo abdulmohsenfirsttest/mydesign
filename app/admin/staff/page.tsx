@@ -2,31 +2,64 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { getAdmin, ROLES, roleLabel, type Role } from "@/lib/roles";
+import { getAdmin, ROLES, roleLabel, AREAS, roleDefaultAreas, effectiveAreas, canSee, type Role, type Area } from "@/lib/roles";
 
-type Staff = { id: string; name: string; email: string | null; phone: string | null; role: string; created_at: string };
+type Staff = { id: string; name: string; email: string | null; phone: string | null; role: string; permissions: Area[] | null; created_at: string };
+
+const OWNER_PHONE = "0547080147";
+
+function AreaToggles({ areas, onToggle }: { areas: Area[]; onToggle: (a: Area) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {AREAS.map((a) => {
+        const on = areas.includes(a.key);
+        return (
+          <button key={a.key} type="button" onClick={() => onToggle(a.key)}
+            className={`flex items-center gap-2 px-3 py-2 border text-xs text-left transition-colors ${on ? "border-white/40 text-white/80 bg-white/[0.04]" : "border-white/10 text-white/30 hover:border-white/25"}`}
+            style={{ fontFamily: "var(--font-inter)" }}>
+            <span className={`w-3.5 h-3.5 border flex items-center justify-center flex-shrink-0 ${on ? "border-white bg-white" : "border-white/30"}`}>
+              {on && <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+            </span>
+            {a.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function StaffPage() {
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [staff, setStaff] = useState<Staff[]>([]);
+
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<{ name: string; email: string; phone: string; password: string; role: Role }>({ name: "", email: "", phone: "", password: "123123", role: "designer" });
+  const [form, setForm] = useState<{ name: string; email: string; phone: string; password: string; role: Role; areas: Area[] }>({ name: "", email: "", phone: "", password: "123123", role: "designer", areas: roleDefaultAreas("designer") });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  // per-row permission editor
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRole, setEditRole] = useState<Role>("designer");
+  const [editAreas, setEditAreas] = useState<Area[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
+
   useEffect(() => {
     const a = getAdmin();
     if (!a) { router.replace("/auth/login"); return; }
-    if (a.role !== "manager") { setAuthorized(false); return; }
+    if (!canSee(a, "staff")) { setAuthorized(false); return; }
     setAuthorized(true);
     fetchStaff();
   }, [router]);
 
   function fetchStaff() {
-    supabase.from("admins").select("id, name, email, phone, role, created_at").order("created_at")
+    supabase.from("admins").select("id, name, email, phone, role, permissions, created_at").order("created_at")
       .then(({ data }) => setStaff((data as Staff[]) ?? []));
+  }
+
+  function toggle(areas: Area[], key: Area): Area[] {
+    return areas.includes(key) ? areas.filter((x) => x !== key) : [...areas, key];
   }
 
   async function handleAdd(e: React.FormEvent) {
@@ -35,12 +68,29 @@ export default function StaffPage() {
     if (!form.email.trim() && !form.phone.trim()) { setError("Add an email or a phone so they can sign in."); return; }
     setSaving(true);
     const { error: err } = await supabase.from("admins").insert({
-      name: form.name, email: form.email.trim() || null, phone: form.phone.trim() || null, password: form.password, role: form.role,
+      name: form.name, email: form.email.trim() || null, phone: form.phone.trim() || null,
+      password: form.password, role: form.role, permissions: form.areas,
     });
     if (err) { setError(err.message); setSaving(false); return; }
-    setForm({ name: "", email: "", phone: "", password: "123123", role: "designer" });
+    setForm({ name: "", email: "", phone: "", password: "123123", role: "designer", areas: roleDefaultAreas("designer") });
     setSaving(false);
     setShowForm(false);
+    fetchStaff();
+  }
+
+  function openEditor(s: Staff) {
+    setEditingId(s.id);
+    setEditRole(s.role as Role);
+    setEditAreas(effectiveAreas({ role: s.role as Role, permissions: s.permissions }));
+  }
+
+  async function saveEditor() {
+    if (!editingId) return;
+    setSavingEdit(true);
+    const { error: err } = await supabase.from("admins").update({ role: editRole, permissions: editAreas }).eq("id", editingId);
+    setSavingEdit(false);
+    if (err) { setError(err.message); return; }
+    setEditingId(null);
     fetchStaff();
   }
 
@@ -55,8 +105,8 @@ export default function StaffPage() {
   if (authorized === null) return <div className="p-8"><p className="text-white/20 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p></div>;
   if (!authorized) return (
     <div className="p-8">
-      <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Staff</h1>
-      <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Only the Manager can manage staff.</p>
+      <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Staff & Permissions</h1>
+      <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>You don&apos;t have access to manage staff.</p>
     </div>
   );
 
@@ -66,25 +116,25 @@ export default function StaffPage() {
     "border-amber-400/30 text-amber-300/70";
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-3xl">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Staff</h1>
-          <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Managers, designers, and project managers who can sign in to the dashboard.</p>
+          <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Staff &amp; Permissions</h1>
+          <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Create accounts, assign roles, and set exactly which sections each person can see.</p>
         </div>
         <button onClick={() => { setShowForm(!showForm); setError(""); }}
-          className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+          className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors flex-shrink-0"
           style={{ fontFamily: "var(--font-inter)" }}>+ Add Staff</button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleAdd} className="border border-white/[0.08] bg-[#161616] p-6 mb-6 max-w-lg">
+        <form onSubmit={handleAdd} className="border border-white/[0.08] bg-[#161616] p-6 mb-6">
           <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>NEW STAFF MEMBER</h2>
           <div className="space-y-4">
             <div>
               <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Name</label>
               <input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Sara Al-Otaibi"
+                placeholder="e.g. Hiba"
                 className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
                 style={{ fontFamily: "var(--font-inter)" }} />
             </div>
@@ -111,12 +161,16 @@ export default function StaffPage() {
               </div>
             </div>
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role</label>
-              <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as Role }))}
+              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role <span className="text-white/15 normal-case tracking-normal">(sets default access)</span></label>
+              <select value={form.role} onChange={(e) => { const r = e.target.value as Role; setForm((f) => ({ ...f, role: r, areas: roleDefaultAreas(r) })); }}
                 className="w-full bg-[#161616] border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40"
                 style={{ fontFamily: "var(--font-inter)" }}>
                 {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
+            </div>
+            <div>
+              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see <span className="text-white/15 normal-case tracking-normal">(Overview is always visible)</span></label>
+              <AreaToggles areas={form.areas} onToggle={(a) => setForm((f) => ({ ...f, areas: toggle(f.areas, a) }))} />
             </div>
           </div>
           {error && <p className="text-red-400/70 text-xs mt-3" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>}
@@ -134,27 +188,79 @@ export default function StaffPage() {
       {staff.length === 0 ? (
         <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No staff yet.</p>
       ) : (
-        <div className="border border-white/[0.08] bg-[#161616]">
-          {staff.map((s, i) => (
-            <div key={s.id} className={`flex items-center justify-between px-5 py-4 ${i < staff.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold" style={{ fontFamily: "var(--font-inter)" }}>{(s.name?.[0] ?? "?").toUpperCase()}</div>
-                <div>
-                  <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{s.name}</p>
-                  <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.email || s.phone || "—"}</p>
+        <div className="space-y-3">
+          {staff.map((s) => {
+            const isOwner = s.phone === OWNER_PHONE;
+            const areas = effectiveAreas({ role: s.role as Role, permissions: s.permissions });
+            const editing = editingId === s.id;
+            return (
+              <div key={s.id} className="border border-white/[0.08] bg-[#161616]">
+                <div className="flex items-center justify-between px-5 py-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ fontFamily: "var(--font-inter)" }}>{(s.name?.[0] ?? "?").toUpperCase()}</div>
+                    <div className="min-w-0">
+                      <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{s.name}{isOwner && <span className="text-white/25"> · Owner</span>}</p>
+                      <p className="text-white/25 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{s.email || s.phone || "—"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className={`text-xs px-2.5 py-1 border ${roleBadge(s.role)}`} style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(s.role)}</span>
+                    {!isOwner && (
+                      <>
+                        <button onClick={() => (editing ? setEditingId(null) : openEditor(s))}
+                          className="text-white/30 text-xs border border-white/10 px-2.5 py-1 hover:border-white/30 hover:text-white/60 transition-colors"
+                          style={{ fontFamily: "var(--font-inter)" }}>{editing ? "Close" : "Permissions"}</button>
+                        <button onClick={() => remove(s.id)} disabled={deleting === s.id}
+                          className="text-red-400/30 hover:text-red-400/70 transition-colors disabled:opacity-30" title="Remove">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-2.5 py-1 border ${roleBadge(s.role)}`} style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(s.role)}</span>
-                {s.phone !== "0547080147" && (
-                  <button onClick={() => remove(s.id)} disabled={deleting === s.id}
-                    className="text-red-400/30 hover:text-red-400/70 transition-colors disabled:opacity-30" title="Remove">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
+
+                {/* current access tags */}
+                <div className="px-5 pb-4 -mt-1 flex flex-wrap gap-1.5">
+                  {isOwner ? (
+                    <span className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Full access</span>
+                  ) : areas.length === 0 ? (
+                    <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Overview only</span>
+                  ) : (
+                    AREAS.filter((a) => areas.includes(a.key)).map((a) => (
+                      <span key={a.key} className="text-white/40 text-xs border border-white/10 px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>{a.label}</span>
+                    ))
+                  )}
+                </div>
+
+                {/* per-row permission editor */}
+                {editing && (
+                  <div className="border-t border-white/[0.06] px-5 py-4 space-y-4">
+                    <div>
+                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role</label>
+                      <select value={editRole} onChange={(e) => { const r = e.target.value as Role; setEditRole(r); setEditAreas(roleDefaultAreas(r)); }}
+                        className="w-full bg-[#161616] border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40"
+                        style={{ fontFamily: "var(--font-inter)" }}>
+                        {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see</label>
+                      <AreaToggles areas={editAreas} onToggle={(a) => setEditAreas((prev) => toggle(prev, a))} />
+                    </div>
+                    <div className="flex gap-3">
+                      <button onClick={saveEditor} disabled={savingEdit}
+                        className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                        style={{ fontFamily: "var(--font-inter)" }}>{savingEdit ? "Saving..." : "Save permissions"}</button>
+                      <button onClick={() => setEditingId(null)}
+                        className="px-6 py-2.5 border border-white/15 text-white/30 text-xs hover:border-white/30 transition-colors"
+                        style={{ fontFamily: "var(--font-inter)" }}>Cancel</button>
+                    </div>
+                    <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>They&apos;ll see the change next time they sign in.</p>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
