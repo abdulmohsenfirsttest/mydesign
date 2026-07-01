@@ -42,9 +42,25 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **Fix:** normalised the phone comparison on login (v3.1.1, commit `3af643c`).
 - **If it recurs:** check how `/auth/login` matches `clients.phone`; normalise both sides before `.eq('phone', …)`.
 
+## BUG-007 — A proposal can be sent to the client blank 🟠 (v4.0.0)
+- **Symptom:** the designer can click "Send to client" with all four proposal sections (Scope/Stages/Pricing/T&C) empty; the client then sees a proposal card with only Approve/Reject.
+- **Root cause:** the four builder textareas aren't required and `saveProposal` coerces empty strings to null.
+- **Fix (planned):** require at least Scope + Pricing to be non-empty before enabling "Send", mirroring the existing manager-approval gate. `app/admin/messages/page.tsx` proposal builder.
+
+## BUG-008 — A "sent" proposal can't be withdrawn or edited 🟠 (v4.0.0)
+- **Symptom:** once sent, the proposal is read-only until the client rejects it; a designer who sent a typo (or after a manager re-price) is stuck waiting on the client.
+- **Root cause:** `proposalEditable` is true only for null/draft/rejected status.
+- **Fix (planned):** add a "Withdraw / edit" action that reverts a sent-but-undecided proposal to editable. `app/admin/messages/page.tsx`.
+
+## BUG-009 — "Delivered together" bundle tag not shown to the client 🟠 (v4.0.0)
+- **Symptom:** the Mood Board + 2D "delivered together" signal shows only in the admin hub (and only by exact name match), never on the client portal.
+- **Root cause:** the tag renders from an exact milestone-name match, not from `milestones.bundle`; the client milestone list has no bundle badge.
+- **Fix (planned):** render the badge from `milestones.bundle` on both the hub and the client project page. (Approval now seeds Mood Board + 2D with `bundle='moodboard_2d'`.)
+
 ---
 
 ## 🔭 Watch / risks (not bugs)
+- **Internal price is UI-hidden, not secured (v4.0.0).** `internal_quotes` (the price/sqm) is readable via the anon key with RLS off; roles are client-side/forgeable. The only true fix is **Security Phase 2** (RLS + server-side role checks). See ADR-0010.
 - **RLS disabled** on the data tables + the anon key ships to every browser → anyone with the key can read/write all rows (see SECURITY.md). Top risk; Phase 2 closes it.
 - **Plaintext passwords** in `clients`/`admins`; **public storage buckets**; **anon key was pasted in chat** (rotate pending — Security Phase 1).
 - **Backups use the anon key** (works only because RLS is off). Add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` **before** the RLS Phase-2 lockdown, or the nightly backup will silently capture 0 rows on RLS-protected tables. See BACKUPS.md.

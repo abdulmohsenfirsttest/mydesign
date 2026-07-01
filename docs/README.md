@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v3.4.0` — operational backbone: automated nightly Supabase backups (→ Drive `mydesign/Backups`), a bug log (`BUGLOG.md`), and a backups doc (`BACKUPS.md`). Product/app surface unchanged since v3.3.0 (Meeting-3 Increment 1, prod = git).
-- **Last session record:** `SES-2026-003`
-- **Next session record:** `SES-2026-004`
+- **Current version:** `v4.0.0` — **new era:** the full Meeting-3 workflow (staff roles, internal price/sqm + manager approval, client proposals with approve/reject, milestone delivery rules). Committed `de19920`, deployed. Enforcement is client-side; true price-hiding is Security Phase 2 (see ADR-0010).
+- **Last session record:** `SES-2026-004`
+- **Next session record:** `SES-2026-005`
 
 ---
 

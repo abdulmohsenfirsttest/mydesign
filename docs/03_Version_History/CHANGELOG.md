@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.0.0 | 2026-07-01 | MAJOR — new era | Meeting-3 full workflow: staff roles, internal price/sqm + manager approval, client proposal (approve/reject), milestone delivery rules |
 | v3.4.0 | 2026-06-30 | MINOR | Operational backbone: automated nightly Supabase backups (→ Drive) + bug log + backups doc |
 | v3.3.0 | 2026-06-29 | MINOR | Meeting-3 Increment 1: 6-service catalog, spaces/sqm capture, milestone start+end dates, first `migrations/` |
 | v3.2.0 | 2026-06-03 → 2026-06-21 | MINOR | Quotes, milestones, files & realtime expansion (committed 2026-06-29 with v3.3.0) |
@@ -110,6 +111,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** None.
 - **Decision:** MINOR — operational tooling, no runtime change. The backup uses the anon key for now (works only because RLS is off); add a service-role key before the RLS Phase-2 lockdown.
 
+### v4.0.0 · Meeting-3 full workflow — roles, internal pricing, proposals, delivery *(NEW ERA)*
+- **What:** Staff **roles** (manager/designer/project_manager) + role-aware login + a role-scoped sidebar + a manager-only **Staff** page; `/admin/projects` gains a **service picker** + **designer/PM assignment** + management-track routing + a role-scoped list; the **Project Hub** gains "Request pricing" (Spaces), a gated **Proposal builder** (Scope/Stages/Pricing/T&C), and milestone **delivery rules** (attach deliverables, can't-complete-without-a-file, Mood Board+2D "delivered together"); a new manager-only **Pricing queue** (`/admin/pricing`); the **client portal** gains the proposal **approve/reject** card (approval advances the project to Mood Board + seeds the first milestones), a spaces summary, and dated milestones + downloadable deliverables. Built with a 4-agent workflow + a 3-agent adversarial review (2 HIGH + key MEDIUM findings fixed).
+- **Why:** Turn the full Meeting-3 طريقة العمل into the product (Increment 1 shipped the role-independent foundation in v3.3.0).
+- **Schema:** migration `0002_meeting3_workflow` — `admins.role`; `projects.service/track/designer_id/pm_id`; `internal_quotes` (staff-only, unique per project) + `proposals` tables; `milestones.files/bundle`; realtime for the two new tables. Applied to prod.
+- **Decision:** **MAJOR** — new roles + data model = a new era. Enforcement is client-side (localStorage roles), matching ADR-0001; true server-side/RLS hiding of the internal price is Security Phase 2 (see **ADR-0010**).
+
 ---
 
 ## Version → commit map
@@ -128,6 +135,7 @@ v3.1.1  3af643c
 v3.2.0  7e3c7c8   (committed 2026-06-29, together with v3.3.0)
 v3.3.0  7e3c7c8   (tag v3.3.0 — Meeting-3 Increment 1)
 v3.4.0  08e9958   (tag v3.4.0 — operational backbone: backups + bug log)
+v4.0.0  de19920   (tag v4.0.0 — Meeting-3 full workflow: roles/pricing/proposals/delivery)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920`

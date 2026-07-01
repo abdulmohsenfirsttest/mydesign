@@ -199,4 +199,26 @@ Adopt a tracked `migrations/` directory in the repository as the **single source
 - There is one-time cost: writing an accurate baseline migration that reflects the hand-typed current state, and the discipline of never again editing schema only in the SQL editor.
 - Until this is adopted, the repo remains an incomplete record of the system — code is versioned, schema is not — which is currently the project's top reproducibility risk alongside the large uncommitted v3.2.0 working set.
 
-> **Status note:** Proposed, not yet adopted. As of 2026-06-28 the only committed DDL remains `supabase/admins.sql`, and the v3.2.0 schema work (quotes, milestones, the files table, storage buckets) is deployed to production but lives only in the Supabase SQL editor, not in the repo.
+> **Status note:** ~~Proposed~~ **Adopted (2026-06-29).** `supabase/migrations/` now holds `0001_meeting3_foundation.sql` and `0002_meeting3_workflow.sql`, both applied to production via the migration tool. A `0000_baseline.sql` snapshot of the pre-existing hand-typed schema is still TODO (generate via `supabase db dump`), after which the repo fully reproduces the database.
+
+---
+
+## ADR-0010: Staff roles + internal-vs-client quote separation (client-side enforced)
+
+**Status:** Accepted (enforcement is client-side; server-side/RLS is Security Phase 2)
+**Date:** 2026-07-01
+
+### Context
+
+Meeting 3 requires the firm to run as a team — a **Manager/Owner**, **Designers**, and a **Project Manager** — and to keep an **internal price/sqm** that the client must never see, distinct from the client-facing **proposal**. The app was single-admin (ADR-0001) with all auth and data access client-side on the anon key with RLS off (ADR-0002). v3.3.0 shipped the role-independent foundation (services, sqm/spaces, milestone dates); this ADR covers the roles + quoting era.
+
+### Decision
+
+We added a **staff role** to `admins` (`manager` | `designer` | `project_manager`; owner = manager) and scope the admin UI by it: managers see everything (incl. the **Pricing** queue and **Staff** management); designers see only their assigned projects; the project_manager sees the management track. Projects gained `service`, `track` (`design`|`management`), `designer_id`, `pm_id`. The **internal quote** (`internal_quotes`, one per project) is staff-only: a designer requests pricing, the **Manager** sets price/sqm and approves in `/admin/pricing`, which **unlocks** the designer's **proposal** builder (`proposals`: Scope/Stages/Pricing/T&C). The client approves/rejects the proposal in the portal; **approval advances the project to Mood Board and seeds the Mood Board + 2D bundle**. Milestones carry `files` (deliverables) and a `bundle` key; a milestone cannot be marked Completed without a deliverable. **All enforcement is client-side** (localStorage `admin_role` + in-component filters), consistent with ADR-0001.
+
+### Consequences
+
+- The product now models the real firm workflow end-to-end (book → sqm → internal price → proposal → client decision → dated milestones → bundled delivery), split across four role-scoped surfaces.
+- **The internal price is hidden in the UI but NOT cryptographically hidden.** With RLS off and the shared anon key, a determined client could read `internal_quotes` directly. Role checks (`getAdmin()`), the manager-only pricing gate, and project scoping are all **browser-side and forgeable** — the same accepted debt as ADR-0001/0002. The **only true fix is Security Phase 2** (enable RLS with per-row policies on `internal_quotes`/`proposals`/every table, and move role/price checks server-side). This ADR pulls that Phase-2 work forward as the next priority.
+- The data model grew by two tables (`internal_quotes`, `proposals`) and six columns; `internal_quotes` has a unique index on `project_id` so the hub gate and pricing queue agree on one canonical row.
+- Enforcement being client-side keeps the build consistent and shippable now, but means "role" and "hidden price" are UX guarantees, not security guarantees, until Phase 2 — this is stated plainly so it is not mistaken for a lockdown.
