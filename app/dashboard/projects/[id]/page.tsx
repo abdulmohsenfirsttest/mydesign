@@ -121,15 +121,9 @@ export default function ProjectDetailPage() {
     // bundled deliverable (Mood Board + 2D) if the plan is still empty — so approval
     // produces visible forward motion instead of dead-ending on an empty timeline.
     if (status === "approved") {
+      // Move into Phase 2. Milestones are NOT auto-seeded — staff build the plan
+      // themselves in the hub (add / edit / reorder however they want).
       await supabase.from("projects").update({ stage: "Mood Board", progress: 28 }).eq("id", id);
-      if (milestones.length === 0) {
-        const iso = (d: Date) => d.toISOString().slice(0, 10);
-        const plus = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
-        await supabase.from("milestones").insert([
-          { project_id: id, name: "Mood Board", status: "Upcoming", start_date: iso(new Date()), end_date: plus(7), due_date: plus(7), sort_order: 0, bundle: "moodboard_2d", files: [] },
-          { project_id: id, name: "2D", status: "Upcoming", start_date: iso(new Date()), end_date: plus(14), due_date: plus(14), sort_order: 1, bundle: "moodboard_2d", files: [] },
-        ]);
-      }
       setProject(prev => prev ? { ...prev, stage: "Mood Board", progress: 28 } : prev);
     }
 

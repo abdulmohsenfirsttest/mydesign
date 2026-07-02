@@ -59,6 +59,9 @@ export default function AdminProjectHub() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
   const [milestoneForm, setMilestoneForm] = useState({ name: "", description: "", status: "Upcoming", start_date: "", end_date: "" });
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [editM, setEditM] = useState({ name: "", description: "", start_date: "", end_date: "" });
+  const [savingEditM, setSavingEditM] = useState(false);
   const [milestoneError, setMilestoneError] = useState("");
   const [savingMilestone, setSavingMilestone] = useState(false);
   const [deletingMilestone, setDeletingMilestone] = useState<string | null>(null);
@@ -360,6 +363,37 @@ export default function AdminProjectHub() {
     await supabase.from("milestones").delete().eq("id", id);
     setMilestones(prev => prev.filter(m => m.id !== id));
     setDeletingMilestone(null);
+  }
+
+  function openEditMilestone(m: Milestone) {
+    setEditingMilestoneId(m.id);
+    setEditM({ name: m.name, description: m.description ?? "", start_date: m.start_date ?? "", end_date: m.end_date ?? "" });
+  }
+
+  async function saveEditMilestone(id: string) {
+    setSavingEditM(true);
+    const { error } = await supabase.from("milestones").update({
+      name: editM.name,
+      description: editM.description || null,
+      start_date: editM.start_date || null,
+      end_date: editM.end_date || null,
+      due_date: editM.end_date || null,
+    }).eq("id", id);
+    setSavingEditM(false);
+    if (error) return;
+    setEditingMilestoneId(null);
+    fetchMilestones();
+  }
+
+  async function moveMilestone(index: number, dir: -1 | 1) {
+    const target = index + dir;
+    if (target < 0 || target >= milestones.length) return;
+    const arr = [...milestones];
+    [arr[index], arr[target]] = [arr[target], arr[index]];
+    setMilestones(arr); // optimistic
+    // persist the new order as sort_order = position so ordering stays clean
+    await Promise.all(arr.map((m, i) => supabase.from("milestones").update({ sort_order: i }).eq("id", m.id)));
+    fetchMilestones();
   }
 
   async function handleAddSpace(e: React.FormEvent) {
@@ -825,6 +859,26 @@ export default function AdminProjectHub() {
                           {i < milestones.length - 1 && <div className="w-px flex-1 mt-2 bg-white/10" style={{ minHeight: "32px" }} />}
                         </div>
                         <div className="flex-1 mb-6 border border-white/[0.08] bg-[#161616] p-5">
+                          {editingMilestoneId === m.id ? (
+                            <div className="space-y-3">
+                              <input value={editM.name} onChange={e => setEditM(f => ({ ...f, name: e.target.value }))} placeholder="Milestone name"
+                                className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2 focus:outline-none focus:border-white/40 placeholder-white/20" style={{ fontFamily: "var(--font-inter)" }} />
+                              <input value={editM.description} onChange={e => setEditM(f => ({ ...f, description: e.target.value }))} placeholder="Description (optional)"
+                                className="w-full bg-transparent border border-white/15 text-white/70 text-xs px-3 py-2 focus:outline-none focus:border-white/40 placeholder-white/20" style={{ fontFamily: "var(--font-inter)" }} />
+                              <div className="grid grid-cols-2 gap-3">
+                                <input type="date" value={editM.start_date} onChange={e => setEditM(f => ({ ...f, start_date: e.target.value }))}
+                                  className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)", colorScheme: "dark" }} />
+                                <input type="date" value={editM.end_date} onChange={e => setEditM(f => ({ ...f, end_date: e.target.value }))}
+                                  className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)", colorScheme: "dark" }} />
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => saveEditMilestone(m.id)} disabled={savingEditM || !editM.name.trim()}
+                                  className="px-4 py-2 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30" style={{ fontFamily: "var(--font-inter)" }}>{savingEditM ? "Saving..." : "Save"}</button>
+                                <button onClick={() => setEditingMilestoneId(null)}
+                                  className="px-4 py-2 border border-white/15 text-white/30 text-xs hover:border-white/30 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="flex items-center gap-2 mb-0.5">
@@ -841,7 +895,16 @@ export default function AdminProjectHub() {
                                 ? <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{fmtDate(m.start_date)} – {fmtDate(m.end_date)}</p>
                                 : m.due_date ? <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{fmtDate(m.due_date)}</p> : null}
                             </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <button onClick={() => moveMilestone(i, -1)} disabled={i === 0} className="text-white/20 hover:text-white/60 transition-colors disabled:opacity-20 p-1" title="Move up">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 15l7-7 7 7"/></svg>
+                              </button>
+                              <button onClick={() => moveMilestone(i, 1)} disabled={i === milestones.length - 1} className="text-white/20 hover:text-white/60 transition-colors disabled:opacity-20 p-1" title="Move down">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7"/></svg>
+                              </button>
+                              <button onClick={() => openEditMilestone(m)} className="text-white/20 hover:text-white/60 transition-colors p-1" title="Edit">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                              </button>
                               <select value={m.status} onChange={e => updateMilestoneStatus(m.id, e.target.value)}
                                 disabled={updatingStatus === m.id}
                                 className={`bg-transparent border text-xs px-2 py-1 focus:outline-none cursor-pointer ${m.status === "Completed" ? "border-white/20 text-white/40" : m.status === "In Progress" ? "border-amber-400/30 text-amber-400/60" : "border-white/10 text-white/20"}`}
@@ -854,6 +917,7 @@ export default function AdminProjectHub() {
                               </button>
                             </div>
                           </div>
+                          )}
                           {/* Deliverables — required before a milestone can be marked Completed (Meeting-3 delivery rule). */}
                           <div className="mt-4 pt-4 border-t border-white/[0.06]">
                             <p className="text-white/20 text-xs tracking-widest mb-2" style={{ fontFamily: "var(--font-inter)" }}>DELIVERABLES</p>
