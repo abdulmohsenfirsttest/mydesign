@@ -101,6 +101,7 @@ export default function AdminProjectHub() {
   const [savingNote, setSavingNote] = useState(false);
   const [noteError, setNoteError] = useState("");
   const [savingProposal, setSavingProposal] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [proposalError, setProposalError] = useState("");
   const [proposalSaved, setProposalSaved] = useState(false);
 
@@ -436,6 +437,62 @@ export default function AdminProjectHub() {
     setRequestingPricing(false);
   }
 
+  // Build the quotation PDF (Scope/Stages/Terms + Subtotal / 15% VAT / Total), upload it, return the URL.
+  async function buildQuotationPdfUrl(data: { scope: string | null; stages: string | null; pricing: string | null; terms: string | null }): Promise<string> {
+    const { default: jsPDF } = await import("jspdf");
+    const proj = projects.find(p => p.id === selectedId);
+    const doc = new jsPDF();
+    const marginX = 20;
+    let y = 24;
+    doc.setFontSize(20);
+    doc.text("QUOTATION", marginX, y);
+    y += 12;
+    doc.setFontSize(11);
+    doc.text(`Client: ${proj?.client_name ?? "—"}`, marginX, y); y += 7;
+    doc.text(`Project: ${proj?.name ?? "—"}`, marginX, y); y += 12;
+    const section = (title: string, body: string) => {
+      doc.setFontSize(12);
+      doc.text(title, marginX, y); y += 7;
+      doc.setFontSize(10);
+      const lines = doc.splitTextToSize(body || "—", 170);
+      doc.text(lines, marginX, y);
+      y += lines.length * 5 + 8;
+    };
+    section("Scope of Work", data.scope ?? "");
+    section("Stages of Work", data.stages ?? "");
+    section("Terms & Conditions", data.terms ?? "");
+    const subtotal = parseFloat(String(data.pricing ?? "").replace(/[^0-9.]/g, "")) || 0;
+    const vat = subtotal * 0.15;
+    const total = subtotal + vat;
+    doc.setFontSize(12);
+    doc.text("Pricing", marginX, y); y += 7;
+    doc.setFontSize(10);
+    doc.text(`Subtotal: SAR ${subtotal.toLocaleString("en-US")}`, marginX, y); y += 6;
+    doc.text(`VAT (15%): SAR ${vat.toLocaleString("en-US")}`, marginX, y); y += 6;
+    doc.text(`Total: SAR ${total.toLocaleString("en-US")}`, marginX, y);
+    const blob = doc.output("blob");
+    const path = `${selectedId}/proposal-${Date.now()}.pdf`;
+    const { error: upErr } = await supabase.storage.from("quotes").upload(path, blob, { contentType: "application/pdf", upsert: true });
+    if (upErr) throw new Error(upErr.message);
+    return supabase.storage.from("quotes").getPublicUrl(path).data.publicUrl;
+  }
+
+  // Generate/regenerate the quotation PDF for the current (already-saved) proposal — works at any status.
+  async function regeneratePdf() {
+    if (!proposal) return;
+    setProposalError("");
+    setGeneratingPdf(true);
+    try {
+      const url = await buildQuotationPdfUrl(proposal);
+      const { error } = await supabase.from("proposals").update({ pdf_url: url }).eq("id", proposal.id);
+      if (error) throw new Error(error.message);
+      setProposal(prev => prev ? { ...prev, pdf_url: url } : prev);
+    } catch (err) {
+      setProposalError(err instanceof Error ? err.message : "Failed to generate quotation PDF.");
+    }
+    setGeneratingPdf(false);
+  }
+
   async function saveProposal(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
@@ -445,46 +502,7 @@ export default function AdminProjectHub() {
     // Generate a quotation PDF (subtotal + 15% VAT) and upload it before writing the proposal row.
     let pdfUrl: string | null = null;
     try {
-      const { default: jsPDF } = await import("jspdf");
-      const proj = projects.find(p => p.id === selectedId);
-      const doc = new jsPDF();
-      const marginX = 20;
-      let y = 24;
-      doc.setFontSize(20);
-      doc.text("QUOTATION", marginX, y);
-      y += 12;
-      doc.setFontSize(11);
-      doc.text(`Client: ${proj?.client_name ?? "—"}`, marginX, y); y += 7;
-      doc.text(`Project: ${proj?.name ?? "—"}`, marginX, y); y += 12;
-
-      const section = (title: string, body: string) => {
-        doc.setFontSize(12);
-        doc.text(title, marginX, y); y += 7;
-        doc.setFontSize(10);
-        const lines = doc.splitTextToSize(body || "—", 170);
-        doc.text(lines, marginX, y);
-        y += lines.length * 5 + 8;
-      };
-      section("Scope of Work", proposalForm.scope);
-      section("Stages of Work", proposalForm.stages);
-      section("Terms & Conditions", proposalForm.terms);
-
-      const subtotal = parseFloat(String(proposalForm.pricing).replace(/[^0-9.]/g, "")) || 0;
-      const vat = subtotal * 0.15;
-      const total = subtotal + vat;
-      doc.setFontSize(12);
-      doc.text("Pricing", marginX, y); y += 7;
-      doc.setFontSize(10);
-      doc.text(`Subtotal: SAR ${subtotal.toLocaleString("en-US")}`, marginX, y); y += 6;
-      doc.text(`VAT (15%): SAR ${vat.toLocaleString("en-US")}`, marginX, y); y += 6;
-      doc.text(`Total: SAR ${total.toLocaleString("en-US")}`, marginX, y);
-
-      const blob = doc.output("blob");
-      const path = `${selectedId}/proposal-${Date.now()}.pdf`;
-      const { error: upErr } = await supabase.storage.from("quotes").upload(path, blob, { contentType: "application/pdf", upsert: true });
-      if (upErr) { setProposalError(upErr.message); setSavingProposal(false); return; }
-      const { data: urlData } = supabase.storage.from("quotes").getPublicUrl(path);
-      pdfUrl = urlData.publicUrl;
+      pdfUrl = await buildQuotationPdfUrl(proposalForm);
     } catch (err) {
       setProposalError(err instanceof Error ? err.message : "Failed to generate quotation PDF.");
       setSavingProposal(false);
@@ -1146,13 +1164,16 @@ export default function AdminProjectHub() {
                       <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TERMS &amp; CONDITIONS</p>
                       <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal?.terms || "—"}</p>
                     </div>
-                    {proposal?.pdf_url && (
-                      <div className="pt-2">
+                    <div className="pt-2 flex items-center gap-3">
+                      {proposal?.pdf_url && (
                         <a href={proposal.pdf_url} target="_blank" rel="noopener noreferrer"
                           className="inline-block px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
                           style={{ fontFamily: "var(--font-inter)" }}>Download quotation (PDF)</a>
-                      </div>
-                    )}
+                      )}
+                      <button onClick={regeneratePdf} disabled={generatingPdf}
+                        className="inline-block px-5 py-2.5 border border-white/20 text-white/50 text-xs tracking-widest hover:border-white/50 hover:text-white/80 transition-colors disabled:opacity-40"
+                        style={{ fontFamily: "var(--font-inter)" }}>{generatingPdf ? "Generating..." : proposal?.pdf_url ? "Regenerate PDF" : "Generate quotation PDF (15% VAT)"}</button>
+                    </div>
                   </div>
                 )}
                 {/* INTERNAL NOTES — staff only, never shown to the client */}
