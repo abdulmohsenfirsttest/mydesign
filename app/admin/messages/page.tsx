@@ -437,6 +437,20 @@ export default function AdminProjectHub() {
     setRequestingPricing(false);
   }
 
+  // Re-open pricing after spaces change: reset the quote to pending with the CURRENT sqm total,
+  // so the Manager re-prices it in the Pricing queue.
+  async function reRequestPricing() {
+    if (!internalQuote) return;
+    setPricingError("");
+    setRequestingPricing(true);
+    const { data, error } = await supabase.from("internal_quotes")
+      .update({ sqm_total: spacesTotal, status: "pending", price_per_sqm: null, total: null, approved_by: null, approved_at: null })
+      .eq("id", internalQuote.id).select().single();
+    if (error) { setPricingError(error.message); setRequestingPricing(false); return; }
+    if (data) { const q = data as InternalQuote; setInternalQuote({ ...q, sqm_total: Number(q.sqm_total), price_per_sqm: null, total: null }); }
+    setRequestingPricing(false);
+  }
+
   // Build the quotation PDF (logo + Scope/Stages/Terms + Subtotal / 15% VAT / Total), upload it, return the URL.
   async function buildQuotationPdfUrl(data: { scope: string | null; stages: string | null; pricing: string | null; terms: string | null }): Promise<string> {
     const { default: jsPDF } = await import("jspdf");
@@ -535,6 +549,16 @@ export default function AdminProjectHub() {
       setProposalError(err instanceof Error ? err.message : "Failed to generate quotation PDF.");
     }
     setGeneratingPdf(false);
+  }
+
+  // Revise a sent/approved proposal: reopen it as a draft so the designer can edit + resend
+  // (a fresh PDF is generated on resend). The client sees the new proposal once it's resent.
+  async function reviseProposal() {
+    if (!proposal) return;
+    setProposalError("");
+    const { error } = await supabase.from("proposals").update({ status: "draft" }).eq("id", proposal.id);
+    if (error) { setProposalError(error.message); return; }
+    setProposal(prev => prev ? { ...prev, status: "draft" } : prev);
   }
 
   async function saveProposal(e: React.FormEvent) {
@@ -1102,9 +1126,18 @@ export default function AdminProjectHub() {
                       {pricingError && <p className="text-red-400/70 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>{pricingError}</p>}
                     </>
                   ) : internalQuote.status === "approved" ? (
-                    <p className="text-white/70 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Priced: SAR {Number(internalQuote.price_per_sqm).toLocaleString("en-US")}/sqm → SAR {Number(internalQuote.total).toLocaleString("en-US")}</p>
+                    <>
+                      <p className="text-white/70 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Priced: SAR {Number(internalQuote.price_per_sqm).toLocaleString("en-US")}/sqm → SAR {Number(internalQuote.total).toLocaleString("en-US")} <span className="text-white/30">({Number(internalQuote.sqm_total).toLocaleString("en-US")} sqm)</span></p>
+                      {Number(internalQuote.sqm_total) !== spacesTotal && (
+                        <p className="text-amber-400/70 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>Spaces changed — total is now {spacesTotal.toLocaleString("en-US")} sqm. Re-request pricing to update the quote.</p>
+                      )}
+                      <button type="button" onClick={reRequestPricing} disabled={requestingPricing}
+                        className="mt-3 px-4 py-2 border border-white/20 text-white/50 text-xs tracking-widest hover:border-white/50 hover:text-white/80 transition-colors disabled:opacity-40"
+                        style={{ fontFamily: "var(--font-inter)" }}>{requestingPricing ? "..." : "Re-request pricing (uses current sqm)"}</button>
+                      {pricingError && <p className="text-red-400/70 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>{pricingError}</p>}
+                    </>
                   ) : (
-                    <p className="text-amber-400/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Pending manager pricing</p>
+                    <p className="text-amber-400/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Pending manager pricing · {Number(internalQuote.sqm_total).toLocaleString("en-US")} sqm</p>
                   )}
                 </div>
               </>
@@ -1129,8 +1162,15 @@ export default function AdminProjectHub() {
                   <div className="border border-white/[0.08] bg-[#161616] p-5 mb-6">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-white/40 text-xs tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROPOSAL STATUS</p>
-                      <span className={`text-xs px-2.5 py-1 border ${proposal.status === "approved" ? "border-white/50 text-white/70" : proposal.status === "rejected" ? "border-red-400/30 text-red-400/60" : proposal.status === "sent" ? "border-amber-400/30 text-amber-400/60" : "border-white/10 text-white/20"}`}
-                        style={{ fontFamily: "var(--font-inter)" }}>{proposal.status.toUpperCase()}</span>
+                      <div className="flex items-center gap-2">
+                        {(proposal.status === "sent" || proposal.status === "approved") && (
+                          <button type="button" onClick={reviseProposal}
+                            className="text-xs border border-white/15 text-white/40 px-2.5 py-1 hover:border-white/40 hover:text-white/70 transition-colors"
+                            style={{ fontFamily: "var(--font-inter)" }}>Revise</button>
+                        )}
+                        <span className={`text-xs px-2.5 py-1 border ${proposal.status === "approved" ? "border-white/50 text-white/70" : proposal.status === "rejected" ? "border-red-400/30 text-red-400/60" : proposal.status === "sent" ? "border-amber-400/30 text-amber-400/60" : "border-white/10 text-white/20"}`}
+                          style={{ fontFamily: "var(--font-inter)" }}>{proposal.status.toUpperCase()}</span>
+                      </div>
                     </div>
                     {proposal.sent_at && <p className="text-white/25 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>Sent {new Date(proposal.sent_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
                     {(proposal.status === "approved" || proposal.status === "rejected") && (
