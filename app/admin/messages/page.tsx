@@ -437,39 +437,83 @@ export default function AdminProjectHub() {
     setRequestingPricing(false);
   }
 
-  // Build the quotation PDF (Scope/Stages/Terms + Subtotal / 15% VAT / Total), upload it, return the URL.
+  // Build the quotation PDF (logo + Scope/Stages/Terms + Subtotal / 15% VAT / Total), upload it, return the URL.
   async function buildQuotationPdfUrl(data: { scope: string | null; stages: string | null; pricing: string | null; terms: string | null }): Promise<string> {
     const { default: jsPDF } = await import("jspdf");
     const proj = projects.find(p => p.id === selectedId);
     const doc = new jsPDF();
+    const pageW = 210; // A4 portrait width (mm)
     const marginX = 20;
-    let y = 24;
-    doc.setFontSize(20);
-    doc.text("QUOTATION", marginX, y);
-    y += 12;
+    let y = 18;
+
+    // Company logo (top-left) — best-effort; the PDF still renders if it fails.
+    try {
+      const res = await fetch("/logo.png");
+      const blob = await res.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      doc.addImage(dataUrl, "PNG", marginX, y, 30, 24); // 500×400 logo → 30×24 mm
+    } catch { /* logo is optional */ }
+
+    doc.setFontSize(22);
+    doc.text("QUOTATION", pageW - marginX, y + 10, { align: "right" });
+    doc.setFontSize(9);
+    doc.setTextColor(130);
+    doc.text(new Date().toLocaleDateString("en-GB"), pageW - marginX, y + 17, { align: "right" });
+    doc.setTextColor(0);
+    y += 34;
+
     doc.setFontSize(11);
-    doc.text(`Client: ${proj?.client_name ?? "—"}`, marginX, y); y += 7;
+    doc.text(`Client: ${proj?.client_name ?? "—"}`, marginX, y); y += 6;
     doc.text(`Project: ${proj?.name ?? "—"}`, marginX, y); y += 12;
+
+    const ensure = (need: number) => { if (y + need > 280) { doc.addPage(); y = 20; } };
     const section = (title: string, body: string) => {
+      ensure(18);
       doc.setFontSize(12);
-      doc.text(title, marginX, y); y += 7;
+      doc.text(title, marginX, y); y += 6;
       doc.setFontSize(10);
-      const lines = doc.splitTextToSize(body || "—", 170);
+      doc.setTextColor(70);
+      const lines = doc.splitTextToSize(body || "—", pageW - marginX * 2);
+      ensure(lines.length * 5 + 6);
       doc.text(lines, marginX, y);
+      doc.setTextColor(0);
       y += lines.length * 5 + 8;
     };
     section("Scope of Work", data.scope ?? "");
     section("Stages of Work", data.stages ?? "");
     section("Terms & Conditions", data.terms ?? "");
+
+    // Pricing table with 15% VAT.
     const subtotal = parseFloat(String(data.pricing ?? "").replace(/[^0-9.]/g, "")) || 0;
     const vat = subtotal * 0.15;
     const total = subtotal + vat;
+    const money = (n: number) => `SAR ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    ensure(44);
+    y += 4;
+    const boxW = 90;
+    const boxX = pageW - marginX - boxW;
     doc.setFontSize(12);
-    doc.text("Pricing", marginX, y); y += 7;
+    doc.text("Pricing", boxX, y); y += 8;
     doc.setFontSize(10);
-    doc.text(`Subtotal: SAR ${subtotal.toLocaleString("en-US")}`, marginX, y); y += 6;
-    doc.text(`VAT (15%): SAR ${vat.toLocaleString("en-US")}`, marginX, y); y += 6;
-    doc.text(`Total: SAR ${total.toLocaleString("en-US")}`, marginX, y);
+    const row = (label: string, val: string, bold = false) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.text(label, boxX, y);
+      doc.text(val, boxX + boxW, y, { align: "right" });
+      y += 7;
+    };
+    row("Subtotal", money(subtotal));
+    row("VAT (15%)", money(vat));
+    doc.setDrawColor(160);
+    doc.line(boxX, y - 3, boxX + boxW, y - 3);
+    y += 1;
+    row("Total (incl. VAT)", money(total), true);
+    doc.setFont("helvetica", "normal");
+
     const blob = doc.output("blob");
     const path = `${selectedId}/proposal-${Date.now()}.pdf`;
     const { error: upErr } = await supabase.storage.from("quotes").upload(path, blob, { contentType: "application/pdf", upsert: true });
