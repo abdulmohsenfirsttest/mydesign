@@ -216,14 +216,18 @@ export default function AdminProjectHub() {
   }, [selectedId]);
 
   // Keep the proposal builder textareas in sync with the loaded proposal (per project).
+  // For a brand-new proposal (none yet), pre-fill pricing from the approved internal
+  // quote total so the designer never has to retype the number the manager set.
   useEffect(() => {
+    const approvedTotal = internalQuote?.status === "approved" && internalQuote.total != null
+      ? Number(internalQuote.total).toLocaleString("en-US") : "";
     setProposalForm({
       scope: proposal?.scope ?? "",
       stages: proposal?.stages ?? "",
-      pricing: proposal?.pricing ?? "",
+      pricing: proposal?.pricing ?? approvedTotal,
       terms: proposal?.terms ?? "",
     });
-  }, [proposal, selectedId]);
+  }, [proposal, selectedId, internalQuote]);
 
   async function handleAddNote(e: React.FormEvent) {
     e.preventDefault();

@@ -67,6 +67,13 @@ export default function PricingPage() {
       approved_at: new Date().toISOString(),
     }).eq("id", q.id);
     if (err) { setError(err.message); setApproving(null); return; }
+    // Auto-fill the client-facing proposal with the approved total and reopen it as a
+    // draft, so the designer just clicks "Send" once and the client sees the new number
+    // + a fresh PDF. No-op (0 rows) if a proposal for this project doesn't exist yet.
+    await supabase.from("proposals").update({
+      pricing: total.toLocaleString("en-US"),
+      status: "draft",
+    }).eq("project_id", q.project_id);
     setApproving(null);
     fetchQuotes();
   }
