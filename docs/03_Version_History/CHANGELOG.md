@@ -2,7 +2,7 @@
 
 MyDesign is a Riyadh-based design-and-build (interior design + construction) platform, styled after mydesign.sa, built and maintained by Abdulmohsen. It runs on Next.js 16 (App Router), React 19, Tailwind v4, TypeScript, and a Supabase Postgres backend, deployed on Vercel at https://mydesign-blush.vercel.app.
 
-The project follows **vMAJOR.MINOR.PATCH** versioning per the team's versioning guide: **MAJOR** marks a new era or breaking change (a new product surface, a rewrite, or an incompatible data model); **MINOR** marks a feature or a batch of related work; **PATCH** marks a fix or a small sub-step. The build arc covered here runs from 2026-06-02 to 2026-06-28.
+The project follows **vMAJOR.MINOR.PATCH** versioning per the team's versioning guide: **MAJOR** marks a new era or breaking change (a new product surface, a rewrite, or an incompatible data model); **MINOR** marks a feature or a batch of related work; **PATCH** marks a fix or a small sub-step. The build arc covered here runs from 2026-06-02 to 2026-07-05.
 
 Ordering convention: the glance table below is **newest-first**; the detailed entries that follow are **oldest-first (chronological)**.
 
@@ -12,6 +12,12 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.6.0 | 2026-07-05 | MINOR | Approving a price **auto-fills the client proposal** (+ reopens it to draft) so the client sees the new number in one Send; builder pre-fills pricing |
+| v4.5.3 | 2026-07-05 | PATCH | **Re-price after a spaces change** ("Re-request pricing" + "spaces changed" warning) + **"Revise"** a sent/approved proposal |
+| v4.5.2 | 2026-07-05 | PATCH | Quotation PDF: **company logo** + clear **Subtotal / VAT (15%) / Total** table + long-text page overflow |
+| v4.5.1 | 2026-07-04 | PATCH | **"Generate quotation PDF"** button on the proposal (works on any status; for proposals that predate Send-time generation) |
+| v4.5.0 | 2026-07-02 | MINOR | **Fully customizable milestones**: inline edit + reorder; proposal approval no longer auto-seeds milestones |
+| v4.4.0 | 2026-07-02 | MINOR | **Staff-only internal notes** beside the proposal (never shown to the client); reverted the meeting Drive link |
 | v4.3.0 | 2026-07-01 | MINOR | Hub polish: meetings staff-internal + Drive link; proposal PDF (15% VAT) to the client; milestone "Skipped"; removed Quotes tab + stage dropdown |
 | v4.2.0 | 2026-07-01 | MINOR | Owner-configurable per-account permissions (what each account can see); Staff → Staff & Permissions |
 | v4.1.0 | 2026-07-01 | MINOR | Email-or-phone login (one portal for clients + team); team staff accounts (Tuqa manager + 4 designers) |
@@ -138,6 +144,42 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** migration `0005_proposal_pdf_meeting_drive` (`proposals.pdf_url`, `meetings.drive_link`); added `jspdf`.
 - **Decision:** MINOR. Built with two parallel agents (hub + client-side).
 
+### v4.4.0 · Staff-only internal notes on the proposal
+- **What:** Reverted the v4.3.0 meeting Google Drive link. Added an **INTERNAL NOTES** section at the bottom of the Proposal tab in the Project Hub — staff add private notes (author + timestamp, delete), realtime, scoped to whoever can open the project. **Never rendered on the client portal.**
+- **Why:** the owner clarified review screenshot #1 — not a Drive link on the meeting, but a private notes space beside the proposal that only chosen staff can see.
+- **Schema:** migration `0006_project_notes` (`project_notes` table + index + realtime).
+- **Decision:** MINOR. Hiding is client-side (the client UI never queries/renders it); true hiding is Security Phase 2 (ADR-0010).
+
+### v4.5.0 · Fully customizable milestones — edit + reorder, no auto-seed
+- **What:** Staff can **edit an existing milestone inline** (name / description / start+end dates) and **reorder** milestones with move up/down (persists `sort_order`). On proposal approval the project still advances to Mood Board, but **no milestones are auto-seeded** — the plan is entirely staff-built.
+- **Why:** the owner wanted the project manager to shape the milestone plan freely, not inherit a fixed template.
+- **Schema:** none — reorder uses the existing `milestones.sort_order` column (from migration 0001).
+- **Decision:** MINOR. Locks in "the milestone plan is authored by staff, never generated."
+
+### v4.5.1 · "Generate quotation PDF" button (any status)
+- **What:** Extracted the jsPDF quotation builder into `buildQuotationPdfUrl` and added a **Generate/Regenerate PDF** button on the proposal display, so staff can produce the PDF for proposals that were **sent/approved before** Send-time generation existed — without re-sending. `saveProposal` reuses the helper.
+- **Why:** the villa/penthouse proposals predated the PDF feature and were read-only, so the client had no PDF to download.
+- **Schema:** none.
+- **Decision:** PATCH — a sub-step of the v4.3.0 PDF feature.
+
+### v4.5.2 · Quotation PDF — company logo + 15% VAT table
+- **What:** Added the **company logo** (`public/logo.png`, converted from `logo.pdf`) to the top of the quotation PDF, and rebuilt the pricing block as a right-aligned table: **Subtotal / VAT (15%) / Total (incl. VAT)** with a divider. Added page-overflow handling for long Scope/Terms text.
+- **Why:** the owner reported the client's PDF showed prices with no visible 15% tax and no branding.
+- **Schema:** none (`jspdf` already present; logo is a static asset).
+- **Decision:** PATCH — same feature, clearer output.
+
+### v4.5.3 · Re-price after a spaces change + revise a sent/approved proposal
+- **What:** Editing spaces used to leave the internal quote **and** the proposal locked at the old sqm, so the client saw nothing new. Added a **"Re-request pricing"** button (Spaces tab) that resets the quote to *pending* at the current sqm total for the Manager to re-approve; a **"spaces changed"** warning when the priced sqm no longer matches the current total; and a **"Revise"** button on a sent/approved proposal that reopens it as a draft to edit + resend.
+- **Why:** the owner: "when i made another space and makes pricing nothing show in fahad account."
+- **Schema:** none.
+- **Decision:** PATCH — shipped under a patch number (v4.5.2 → v4.5.3) as a sub-step that closes a real workflow gap (no re-pricing path after approval); the v4.6.0 minor completes the loop.
+
+### v4.6.0 · Approving a price auto-fills the proposal (one-click Send)
+- **What:** When the Manager **approves** an internal quote, the client-facing proposal's **pricing is set to the approved total and the proposal reopens as a draft** — so the designer just clicks **Send** once (regenerating the PDF) and the client sees the new number. The proposal builder also **pre-fills pricing** from the approved quote for first-time proposals.
+- **Why:** the owner chose (over showing raw pricing on the client project) to keep the proposal as the single client-facing document but stop making staff retype the price the manager already set.
+- **Schema:** none.
+- **Decision:** MINOR. Locks in: the proposal is the only place the client sees price; the internal price/sqm stays staff-only; approving a price *is* the pricing. Completes the re-pricing loop from v4.5.3.
+
 ---
 
 ## Version → commit map
@@ -160,6 +202,12 @@ v4.0.0  de19920   (tag v4.0.0 — Meeting-3 full workflow: roles/pricing/proposa
 v4.1.0  1df2d06   (tag v4.1.0 — email-or-phone login + team staff accounts)
 v4.2.0  7fec31f   (tag v4.2.0 — owner-configurable per-account permissions)
 v4.3.0  2d7fc72   (tag v4.3.0 — hub polish: meetings internal, proposal PDF w/ VAT, milestone Skipped)
+v4.4.0  fe1c14c   (tag v4.4.0 — staff-only internal notes; revert meeting Drive link)
+v4.5.0  afaa7cd   (tag v4.5.0 — fully customizable milestones: edit + reorder; drop auto-seed)
+v4.5.1  249675d   (tag v4.5.1 — Generate quotation PDF button, any status)
+v4.5.2  d0e790c   (tag v4.5.2 — quotation PDF: logo + 15% VAT table)
+v4.5.3  e958a65   (tag v4.5.3 — re-price after spaces change + revise a sent/approved proposal)
+v4.6.0  1c474fc   (tag v4.6.0 — approving a price auto-fills the proposal; one-click Send)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc`
