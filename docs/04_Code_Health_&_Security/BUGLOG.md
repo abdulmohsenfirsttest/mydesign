@@ -63,6 +63,12 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **Fix:** `alter table public.files disable row level security;` (migration `0007_files_rls_restore.sql`), restoring parity with all other tables; and the upload handler now captures both the storage error and the insert error and renders a red message on failure. Verified the anon role can insert+read again (rolled-back probe).
 - **If it recurs:** first check live RLS drift — `select relname, relrowsecurity from pg_class where relnamespace='public'::regnamespace order by 1;` — `files` (and every data table) should read `false` until Security Phase 2. Never leave a `supabase…insert()` result unread; always destructure and surface `error` (same lesson as BUG-004). Watch for **untracked schema changes made directly in the dashboard** — they don't appear in `supabase/migrations/` and drift silently.
 
+## BUG-011 — "Have to log in again when returning to the main page" ✅ (v4.7.0)
+- **Symptom:** testers reported that after returning to the marketing homepage they had to log in again to reach the dashboard.
+- **Root cause:** **not** an actual session loss — the `localStorage` session persists across navigation. The public navbar (`app/components/Navbar.tsx`) was session-blind and only ever showed a "Client Login" link, with no "Dashboard"/"Admin" entry anywhere on the marketing site; the only visible way forward was Login, so users re-authenticated. The login page also didn't short-circuit an existing session.
+- **Fix:** made the navbar session-aware (shows "My Dashboard"/"Admin Panel" when a session exists, behind a mounted-default that matches the server render to avoid hydration mismatch) and made `/auth/login` redirect an already-logged-in visitor to their portal.
+- **If it recurs:** confirm it's affordance, not auth — check `localStorage` still holds `client_id` / `admin_session` after navigating to `/`; the fix lives in `Navbar.tsx` (session read) and `app/auth/login/page.tsx` (redirect). Note there is still **no session expiry** (localStorage never expires) — a real timeout only arrives with Security Phase 2 / Supabase Auth.
+
 ---
 
 ## 🔭 Watch / risks (not bugs)

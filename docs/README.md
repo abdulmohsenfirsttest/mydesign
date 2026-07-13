@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.6.1` — **fix broken file uploads**: `public.files` had RLS enabled with no policy (an out-of-band dashboard change) so uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`) and made the Upload page surface any error. On top of v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
-- **Last session record:** `SES-2026-009`
-- **Next session record:** `SES-2026-010`
+- **Current version:** `v4.7.0` — **testing-feedback UX**: the marketing navbar is now session-aware ("My Dashboard"/"Admin Panel" when logged in; already-logged-in visitors skip the login form), and the New Milestone form takes an optional deliverable so a milestone can be created Completed in one step ("Completed" is greyed out with inline guidance until a file is attached). On top of v4.6.1 (file-upload RLS fix), v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
+- **Last session record:** `SES-2026-010`
+- **Next session record:** `SES-2026-011`
 
 ---
 

@@ -59,6 +59,7 @@ export default function AdminProjectHub() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [showMilestoneForm, setShowMilestoneForm] = useState(false);
   const [milestoneForm, setMilestoneForm] = useState({ name: "", description: "", status: "Upcoming", start_date: "", end_date: "" });
+  const [newMilestoneFile, setNewMilestoneFile] = useState<File | null>(null);
   const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
   const [editM, setEditM] = useState({ name: "", description: "", start_date: "", end_date: "" });
   const [savingEditM, setSavingEditM] = useState(false);
@@ -311,13 +312,24 @@ export default function AdminProjectHub() {
       setMilestoneError("End date must be on or after the start date.");
       return;
     }
-    // Delivery rule: a milestone can't be created as Completed — it has no deliverable yet.
-    if (milestoneForm.status === "Completed") {
-      setMilestoneError("A new milestone can't start as Completed — create it, attach a deliverable, then mark it Completed.");
+    // Delivery rule: a milestone can only be Completed if it has a deliverable.
+    // You may attach one right here to create it Completed in one step; otherwise
+    // pick another status now and add the file later.
+    if (milestoneForm.status === "Completed" && !newMilestoneFile) {
+      setMilestoneError("Attach a deliverable to create this milestone as Completed — or choose another status and add the file later.");
       return;
     }
     setMilestoneError("");
     setSavingMilestone(true);
+    // Upload the optional deliverable first, so the milestone row is created complete.
+    let files: { name: string; size: string; url: string }[] = [];
+    if (newMilestoneFile) {
+      const path = `${selectedId}/${Date.now()}-${newMilestoneFile.name}`;
+      const { error: upErr } = await supabase.storage.from("files").upload(path, newMilestoneFile);
+      if (upErr) { setMilestoneError(upErr.message); setSavingMilestone(false); return; }
+      const { data: urlData } = supabase.storage.from("files").getPublicUrl(path);
+      files = [{ name: newMilestoneFile.name, size: `${(newMilestoneFile.size / (1024 * 1024)).toFixed(1)} MB`, url: urlData.publicUrl }];
+    }
     const { data, error } = await supabase.from("milestones").insert({
       project_id: selectedId, name: milestoneForm.name,
       description: milestoneForm.description || null,
@@ -325,11 +337,13 @@ export default function AdminProjectHub() {
       start_date: milestoneForm.start_date,
       end_date: milestoneForm.end_date,
       due_date: milestoneForm.end_date, // keep due_date in sync for backward-compatible displays
+      files,
       sort_order: milestones.length,
     }).select().single();
     if (error) { setMilestoneError(error.message); setSavingMilestone(false); return; }
     if (data) setMilestones(prev => [...prev, data]);
     setMilestoneForm({ name: "", description: "", status: "Upcoming", start_date: "", end_date: "" });
+    setNewMilestoneFile(null);
     setSavingMilestone(false);
     setShowMilestoneForm(false);
   }
@@ -914,11 +928,28 @@ export default function AdminProjectHub() {
                         </div>
                       </div>
                       <div>
+                        <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Deliverable <span className="text-white/15 normal-case tracking-normal">(optional)</span></label>
+                        <input type="file"
+                          onChange={e => {
+                            const f = e.target.files?.[0] ?? null;
+                            setNewMilestoneFile(f);
+                            // If the file is cleared while status is Completed, step it back so the form stays valid.
+                            if (!f && milestoneForm.status === "Completed") setMilestoneForm(mf => ({ ...mf, status: "In Progress" }));
+                          }}
+                          className="w-full text-xs text-white/50 file:mr-3 file:py-2 file:px-3 file:border file:border-white/15 file:bg-[#1e1e1e] file:text-white/70 file:text-xs file:cursor-pointer hover:file:border-white/40"
+                          style={{ fontFamily: "var(--font-inter)" }} />
+                        <p className="text-white/20 text-[11px] mt-1.5" style={{ fontFamily: "var(--font-inter)" }}>Attach the deliverable (moodboard, render, PDF…) to create this milestone as <span className="text-white/40">Completed</span> in one step — or leave it and add the file later.</p>
+                      </div>
+                      <div>
                         <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Status</label>
                         <select value={milestoneForm.status} onChange={e => setMilestoneForm(f => ({ ...f, status: e.target.value }))}
                           className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40"
                           style={{ fontFamily: "var(--font-inter)" }}>
-                          {milestoneStatuses.map(s => <option key={s}>{s}</option>)}
+                          {milestoneStatuses.map(s => (
+                            <option key={s} value={s} disabled={s === "Completed" && !newMilestoneFile}>
+                              {s === "Completed" && !newMilestoneFile ? "Completed — attach a deliverable first" : s}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     </div>
@@ -929,7 +960,7 @@ export default function AdminProjectHub() {
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {savingMilestone ? "Saving..." : "Add Milestone"}
                       </button>
-                      <button type="button" onClick={() => { setShowMilestoneForm(false); setMilestoneError(""); }}
+                      <button type="button" onClick={() => { setShowMilestoneForm(false); setMilestoneError(""); setNewMilestoneFile(null); }}
                         className="px-6 py-2.5 border border-white/15 text-white/30 text-xs hover:border-white/30 transition-colors"
                         style={{ fontFamily: "var(--font-inter)" }}>Cancel</button>
                     </div>

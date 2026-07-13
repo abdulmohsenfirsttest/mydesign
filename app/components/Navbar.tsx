@@ -12,11 +12,28 @@ const links = [
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  // Default matches the server render so there is no hydration mismatch; the
+  // effect below upgrades it to a portal link once we can read localStorage.
+  const [portal, setPortal] = useState({ href: "/auth/login", label: "Client Login" });
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    // A returning visitor keeps their session (localStorage); show them the way
+    // back into their portal instead of a Login button. Admin takes precedence.
+    // localStorage is client-only, so this must run after mount — the default
+    // state already matches the server render, so there's no hydration mismatch.
+    const next = localStorage.getItem("admin_session")
+      ? { href: "/admin", label: "Admin Panel" }
+      : localStorage.getItem("client_id")
+        ? { href: "/dashboard", label: "My Dashboard" }
+        : null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from a client-only store
+    if (next) setPortal(next);
   }, []);
 
   return (
@@ -57,11 +74,11 @@ export default function Navbar() {
 
         <div className="hidden md:flex items-center gap-3">
           <Link
-            href="/auth/login"
+            href={portal.href}
             className="text-sm text-white/50 hover:text-white transition-colors"
             style={{ fontFamily: "var(--font-inter)" }}
           >
-            Client Login
+            {portal.label}
           </Link>
           <Link
             href="/book"

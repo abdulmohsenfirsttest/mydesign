@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +11,13 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Already signed in? Don't make a returning visitor re-enter credentials —
+  // send them straight to their portal (their localStorage session persisted).
+  useEffect(() => {
+    if (localStorage.getItem("admin_session")) router.replace("/admin");
+    else if (localStorage.getItem("client_id")) router.replace("/dashboard");
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

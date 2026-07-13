@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.7.0 | 2026-07-13 | MINOR | **Testing-feedback UX**: the marketing navbar is now **session-aware** (shows "My Dashboard"/"Admin Panel" when logged in; already-logged-in visitors skip the login form) so returning users stop re-authenticating; and the **New Milestone form takes a deliverable** so a milestone can be created **Completed in one step** — "Completed" is greyed out with inline guidance until a file is attached (no more post-submit red wall) |
 | v4.6.1 | 2026-07-13 | PATCH | **Fix broken file uploads**: `public.files` had RLS enabled with no policy (out-of-band change) → uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`), and the Upload page now surfaces any storage/insert error instead of swallowing it |
 | v4.6.0 | 2026-07-05 | MINOR | Approving a price **auto-fills the client proposal** (+ reopens it to draft) so the client sees the new number in one Send; builder pre-fills pricing |
 | v4.5.3 | 2026-07-05 | PATCH | **Re-price after a spaces change** ("Re-request pricing" + "spaces changed" warning) + **"Revise"** a sent/approved proposal |
@@ -187,6 +188,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** `alter table public.files disable row level security;` (migration 0007). No table/column change.
 - **Decision:** PATCH — a revert of an accidental change back to the documented baseline (ADR-0002: anon key, RLS off on all data tables; true per-row hiding is Security Phase 2). Also added the tracked migration so live-DB schema drift stops going unrecorded, and surfaced upload errors so this silent-failure class can't recur.
 
+### v4.7.0 · Testing-feedback UX: session-aware navbar + one-step milestone deliverable
+- **What:** Two fixes from the team's testing round. (1) **Session-aware navbar** — the public marketing header (`Navbar.tsx`) read no session and always showed "Client Login," so returning-but-still-logged-in users clicked it and re-entered credentials. It now shows **"My Dashboard"** (client) or **"Admin Panel"** (staff) linking straight into the portal when a `localStorage` session exists, and `/auth/login` now **redirects an already-logged-in visitor** to their portal instead of showing the form. (2) **One-step milestone deliverable** — the New Milestone form gained an optional **Deliverable** file field, so a milestone can be created **Completed in a single save**; the Status dropdown **greys out "Completed" with inline guidance** ("attach a deliverable first") until a file is chosen, replacing the old post-submit red-error wall. Clearing the file steps a Completed selection back to In Progress. The existing per-milestone attach-then-complete flow is unchanged.
+- **Why:** testers reported "we have to log in again when we return to the main page" (the session was never actually lost — it was a navbar affordance gap) and hit the milestone "can't start as Completed" wall when trying to post a finished moodboard.
+- **Schema:** none — the deliverable writes to the existing `milestones.files` jsonb (migration 0002); the navbar reads the existing `localStorage` session.
+- **Decision:** MINOR. The "re-login" complaint is fixed as UX, not auth — the localStorage model is unchanged (client-side enforcement, Security Phase 2 still pending). The milestone form now supports create-and-complete-in-one-step while preserving the deliverable-before-Completed rule, just enforced *before* submit rather than after.
+
 ---
 
 ## Version → commit map
@@ -216,6 +223,7 @@ v4.5.2  d0e790c   (tag v4.5.2 — quotation PDF: logo + 15% VAT table)
 v4.5.3  e958a65   (tag v4.5.3 — re-price after spaces change + revise a sent/approved proposal)
 v4.6.0  1c474fc   (tag v4.6.0 — approving a price auto-fills the proposal; one-click Send)
 v4.6.1  5bb893d   (tag v4.6.1 — fix broken file uploads: files-table RLS restore + surface upload errors)
+v4.7.0  <pending>   (tag v4.7.0 — testing-feedback UX: session-aware navbar + one-step milestone deliverable)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 5bb893d`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 5bb893d · v4.7.0 <pending>`
