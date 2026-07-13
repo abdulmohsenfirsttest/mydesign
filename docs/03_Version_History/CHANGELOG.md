@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.6.1 | 2026-07-13 | PATCH | **Fix broken file uploads**: `public.files` had RLS enabled with no policy (out-of-band change) → uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`), and the Upload page now surfaces any storage/insert error instead of swallowing it |
 | v4.6.0 | 2026-07-05 | MINOR | Approving a price **auto-fills the client proposal** (+ reopens it to draft) so the client sees the new number in one Send; builder pre-fills pricing |
 | v4.5.3 | 2026-07-05 | PATCH | **Re-price after a spaces change** ("Re-request pricing" + "spaces changed" warning) + **"Revise"** a sent/approved proposal |
 | v4.5.2 | 2026-07-05 | PATCH | Quotation PDF: **company logo** + clear **Subtotal / VAT (15%) / Total** table + long-text page overflow |
@@ -180,6 +181,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** none.
 - **Decision:** MINOR. Locks in: the proposal is the only place the client sees price; the internal price/sqm stays staff-only; approving a price *is* the pricing. Completes the re-pricing loop from v4.5.3.
 
+### v4.6.1 · Fix broken file uploads (files-table RLS restore)
+- **What:** File uploads on the admin **Upload Files** page had stopped working during team testing — files landed in the storage bucket but their metadata row was rejected, so they "vanished" and every file list (admin recently-uploaded, client Files page, project detail Files) rendered empty. Root cause: `public.files` had **Row-Level Security enabled with zero policies** (deny-all), applied out-of-band directly in the Supabase dashboard — it is in no migration and every sibling data table runs with RLS off. Re-disabled RLS on `public.files` to restore parity, recorded as migration **`0007_files_rls_restore.sql`**, and hardened `app/admin/uploads/page.tsx` to capture and display any storage/insert error instead of the previous `if (!error)` swallow. (Confirmed the milestone-deliverable, meeting-attachment, quote-file and proposal-PDF paths were unaffected — they write file info to a jsonb column on their own RLS-off row, never to `public.files`.)
+- **Why:** the deny-all state broke the entire file-sharing feature for testers, and the silent-failure code hid it — a report of "we can't upload anything."
+- **Schema:** `alter table public.files disable row level security;` (migration 0007). No table/column change.
+- **Decision:** PATCH — a revert of an accidental change back to the documented baseline (ADR-0002: anon key, RLS off on all data tables; true per-row hiding is Security Phase 2). Also added the tracked migration so live-DB schema drift stops going unrecorded, and surfaced upload errors so this silent-failure class can't recur.
+
 ---
 
 ## Version → commit map
@@ -208,6 +215,7 @@ v4.5.1  249675d   (tag v4.5.1 — Generate quotation PDF button, any status)
 v4.5.2  d0e790c   (tag v4.5.2 — quotation PDF: logo + 15% VAT table)
 v4.5.3  e958a65   (tag v4.5.3 — re-price after spaces change + revise a sent/approved proposal)
 v4.6.0  1c474fc   (tag v4.6.0 — approving a price auto-fills the proposal; one-click Send)
+v4.6.1  aaf3300   (tag v4.6.1 — fix broken file uploads: files-table RLS restore + surface upload errors)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 aaf3300`

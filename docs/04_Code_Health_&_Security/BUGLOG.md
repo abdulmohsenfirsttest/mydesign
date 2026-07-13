@@ -57,6 +57,12 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **Root cause:** the tag renders from an exact milestone-name match, not from `milestones.bundle`; the client milestone list has no bundle badge.
 - **Fix (planned):** render the badge from `milestones.bundle` on both the hub and the client project page. (Approval now seeds Mood Board + 2D with `bundle='moodboard_2d'`.)
 
+## BUG-010 — File uploads silently failed: `files` table RLS deny-all ✅ (v4.6.1)
+- **Symptom:** during team testing, uploading on the admin **Upload Files** page appeared to do nothing — files never showed up, and the client Files page / project Files list were empty. No error was shown.
+- **Root cause:** `public.files` had **RLS enabled with zero policies** (deny-all), applied **out-of-band in the Supabase dashboard** (in no migration; every sibling table has RLS off). The physical upload to the `files` storage bucket succeeded, but the follow-up `insert into public.files` — and all three `select`s — were rejected by RLS. The upload code made it invisible: `app/admin/uploads/page.tsx` guarded only the storage step with `if (!error)` and **never read the insert error**.
+- **Fix:** `alter table public.files disable row level security;` (migration `0007_files_rls_restore.sql`), restoring parity with all other tables; and the upload handler now captures both the storage error and the insert error and renders a red message on failure. Verified the anon role can insert+read again (rolled-back probe).
+- **If it recurs:** first check live RLS drift — `select relname, relrowsecurity from pg_class where relnamespace='public'::regnamespace order by 1;` — `files` (and every data table) should read `false` until Security Phase 2. Never leave a `supabase…insert()` result unread; always destructure and surface `error` (same lesson as BUG-004). Watch for **untracked schema changes made directly in the dashboard** — they don't appear in `supabase/migrations/` and drift silently.
+
 ---
 
 ## 🔭 Watch / risks (not bugs)

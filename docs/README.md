@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.3.0` — hub polish: meetings are staff-internal (+ Drive link), the proposal carries a quotation **PDF with 15% VAT** to the client, milestones gain a **"Skipped"** status; removed the Quotes tab + manual stage dropdown. Committed `2d7fc72`, deployed. (On top of v4.2.0 permissions / v4.0.0 Meeting-3 workflow; enforcement client-side, Security Phase 2 pending — ADR-0010.)
-- **Last session record:** `SES-2026-007`
-- **Next session record:** `SES-2026-008`
+- **Current version:** `v4.6.1` — **fix broken file uploads**: `public.files` had RLS enabled with no policy (an out-of-band dashboard change) so uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`) and made the Upload page surface any error. On top of v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
+- **Last session record:** `SES-2026-009`
+- **Next session record:** `SES-2026-010`
 
 ---
 

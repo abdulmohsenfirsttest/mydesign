@@ -1,0 +1,21 @@
+-- ============================================================================
+-- Migration 0007 — Restore public.files to the baseline (RLS off) — v4.6.1
+-- ----------------------------------------------------------------------------
+-- Root cause of a production file-upload breakage: RLS had been ENABLED on
+-- public.files with ZERO policies (deny-all), applied out-of-band directly in
+-- the Supabase dashboard (it is in no prior migration). Every sibling data
+-- table (projects, milestones, meetings, quotes, spaces, proposals,
+-- internal_quotes, project_notes, clients, bookings) runs with RLS OFF on the
+-- anon key (ADR-0002 — true per-row hiding is Security Phase 2). With RLS on
+-- and no policy, the anon-key INSERT/SELECT/DELETE on public.files all failed
+-- closed: files uploaded to the 'files' storage bucket but their metadata row
+-- was rejected, so uploads "vanished" and every file list rendered empty.
+--
+-- This migration reverts public.files to the documented sibling posture so the
+-- Upload Files surface, the client Files page, and the project Files list work
+-- again. It changes nothing about the other tables and does NOT advance
+-- Security Phase 2 (which will enable RLS + real policies on ALL tables at
+-- once). Additive & idempotent.
+-- ============================================================================
+
+alter table public.files disable row level security;

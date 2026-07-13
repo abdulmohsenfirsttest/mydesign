@@ -15,6 +15,7 @@ export default function UploadsPage() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,20 +39,23 @@ export default function UploadsPage() {
   async function uploadFiles(fileList: FileList | null) {
     if (!fileList || !selectedClient) return;
     setUploading(true);
+    setUploadError(null);
+    const failed: string[] = [];
     for (const file of Array.from(fileList)) {
       const path = `${selectedClient}/${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("files").upload(path, file);
-      if (!error) {
-        const { data: urlData } = supabase.storage.from("files").getPublicUrl(path);
-        await supabase.from("files").insert({
-          client_id: selectedClient,
-          project_id: selectedProject || null,
-          name: file.name,
-          size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-          url: urlData.publicUrl,
-        });
-      }
+      const { error: storageError } = await supabase.storage.from("files").upload(path, file);
+      if (storageError) { failed.push(`${file.name} — ${storageError.message}`); continue; }
+      const { data: urlData } = supabase.storage.from("files").getPublicUrl(path);
+      const { error: insertError } = await supabase.from("files").insert({
+        client_id: selectedClient,
+        project_id: selectedProject || null,
+        name: file.name,
+        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+        url: urlData.publicUrl,
+      });
+      if (insertError) failed.push(`${file.name} — ${insertError.message}`);
     }
+    if (failed.length) setUploadError(`Couldn't save ${failed.length} file(s): ${failed.join("; ")}`);
     fetchFiles();
     setUploading(false);
   }
@@ -80,7 +84,7 @@ export default function UploadsPage() {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Upload Files</h1>
-        <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Share files and deliverables directly to a client's portal.</p>
+        <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Share files and deliverables directly to a client&apos;s portal.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -124,6 +128,10 @@ export default function UploadsPage() {
               </>
             )}
           </div>
+
+          {uploadError && (
+            <p className="mt-3 text-red-400/80 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{uploadError}</p>
+          )}
         </div>
 
         <div className="border border-white/[0.08] bg-[#161616] p-6">
