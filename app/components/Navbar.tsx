@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 const links = [
   { href: "/", label: "Home" },
@@ -36,24 +38,36 @@ export default function Navbar() {
     if (next) setPortal(next);
   }, []);
 
+  // Over the homepage hero (unscrolled, transparent header on a dark photo) the
+  // text must stay white in BOTH themes — a photographic-overlay exception, same
+  // as the hero headline. Everywhere else the semantic tokens apply.
+  const overHero = usePathname() === "/" && !scrolled;
+  const cPrimary = overHero ? "text-white" : "text-foreground";
+  const cRing = overHero ? "border-white" : "border-foreground";
+  const cLink = overHero ? "text-white/80 hover:text-white" : "text-muted-1 hover:text-foreground";
+  const cPortal = overHero ? "text-white/60 hover:text-white" : "text-muted-2 hover:text-foreground";
+  const cCta = overHero
+    ? "border-white text-white hover:bg-white hover:text-black"
+    : "border-foreground text-foreground hover:bg-foreground hover:text-background";
+
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-[#0a0a0a]/95 backdrop-blur-sm" : "bg-transparent"
+        scrolled ? "bg-background/95 backdrop-blur-sm" : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full border-2 border-white flex items-center justify-center">
-            <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-playfair)" }}>
+          <div className={`w-9 h-9 rounded-full border-2 ${cRing} flex items-center justify-center`}>
+            <span className={`${cPrimary} font-bold text-sm`} style={{ fontFamily: "var(--font-playfair)" }}>
               my
             </span>
           </div>
           <div className="leading-tight">
-            <p className="text-white text-sm font-semibold tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>
+            <p className={`${cPrimary} text-sm font-semibold tracking-wide`} style={{ fontFamily: "var(--font-inter)" }}>
               Design &amp;
             </p>
-            <p className="text-white text-sm font-semibold tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>
+            <p className={`${cPrimary} text-sm font-semibold tracking-wide`} style={{ fontFamily: "var(--font-inter)" }}>
               Build
             </p>
           </div>
@@ -64,7 +78,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm text-white/80 hover:text-white transition-colors tracking-wide"
+              className={`text-sm ${cLink} transition-colors tracking-wide`}
               style={{ fontFamily: "var(--font-inter)" }}
             >
               {link.label}
@@ -73,16 +87,17 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle className={overHero ? "text-white/70 hover:text-white" : undefined} />
           <Link
             href={portal.href}
-            className="text-sm text-white/50 hover:text-white transition-colors"
+            className={`text-sm ${cPortal} transition-colors`}
             style={{ fontFamily: "var(--font-inter)" }}
           >
             {portal.label}
           </Link>
           <Link
             href="/book"
-            className="px-5 py-2 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors"
+            className={`px-5 py-2 border ${cCta} text-sm tracking-widest transition-colors`}
             style={{ fontFamily: "var(--font-inter)" }}
           >
             Book Now

@@ -1,13 +1,58 @@
 @import "tailwindcss";
 
 :root {
+  /* Dark theme — the default; matches the site's original look. */
   --background: #0a0a0a;
   --foreground: #ffffff;
+  --surface: #161616;
+  --surface-2: #1e1e1e;
+  --border-strong: rgba(255, 255, 255, 0.45);
+  --border: rgba(255, 255, 255, 0.18);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --muted-1: rgba(255, 255, 255, 0.75);
+  --muted-2: rgba(255, 255, 255, 0.45);
+  --muted-3: rgba(255, 255, 255, 0.3);
+  --muted-4: rgba(255, 255, 255, 0.18);
+  --fill: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] {
+  /* Warm luxury off-white. The muted ladder is intentionally HIGHER contrast
+     than a naive invert of the dark values — sunlight readability was the
+     complaint that motivated the light theme. */
+  --background: #faf9f7;
+  --foreground: #141311;
+  --surface: #ffffff;
+  --surface-2: #f1efeb;
+  --border-strong: rgba(20, 19, 17, 0.45);
+  --border: rgba(20, 19, 17, 0.2);
+  --border-soft: rgba(20, 19, 17, 0.1);
+  --muted-1: rgba(20, 19, 17, 0.8);
+  --muted-2: rgba(20, 19, 17, 0.58);
+  --muted-3: rgba(20, 19, 17, 0.46);
+  --muted-4: rgba(20, 19, 17, 0.34);
+  --fill: rgba(20, 19, 17, 0.05);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border-strong: var(--border-strong);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  /* Aliases: Tailwind v4 resolves `border-soft` / `border-strong` via
+     --color-soft / --color-strong (the `border-` prefix is the utility,
+     not part of the color name). Without these the 90+ border-soft /
+     border-strong call sites generate no CSS. */
+  --color-soft: var(--border-soft);
+  --color-strong: var(--border-strong);
+  --color-muted-1: var(--muted-1);
+  --color-muted-2: var(--muted-2);
+  --color-muted-3: var(--muted-3);
+  --color-muted-4: var(--muted-4);
+  --color-fill: var(--fill);
   --font-heading: var(--font-playfair);
   --font-sans: var(--font-inter);
 }

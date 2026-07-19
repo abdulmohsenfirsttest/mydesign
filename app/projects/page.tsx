@@ -34,32 +34,32 @@ export default function ProjectsPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[#0a0a0a] pt-24 pb-20">
+      <main className="bg-background pt-24 pb-20">
         <div className="max-w-7xl mx-auto px-6">
           <h1
-            className="text-5xl md:text-6xl text-white mb-4"
+            className="text-5xl md:text-6xl text-foreground mb-4"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
             Our Projects
           </h1>
-          <p className="text-white/40 max-w-lg mb-16 text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
+          <p className="text-muted-2 max-w-lg mb-16 text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
             A selection of completed works spanning cultural institutions, residential design, hospitality, and commercial developments across the Kingdom.
           </p>
 
           <div className="space-y-20">
             {projects.map((project) => (
               <div key={project.title}>
-                <div className="grid grid-cols-1 md:grid-cols-2 border border-white/10 mb-1">
-                  <div className="px-8 py-8 border-b md:border-b-0 md:border-r border-white/10">
+                <div className="grid grid-cols-1 md:grid-cols-2 border border-soft mb-1">
+                  <div className="px-8 py-8 border-b md:border-b-0 md:border-r border-soft">
                     <h2
-                      className="text-2xl md:text-3xl text-white leading-snug"
+                      className="text-2xl md:text-3xl text-foreground leading-snug"
                       style={{ fontFamily: "var(--font-playfair)" }}
                     >
                       {project.title}
                     </h2>
                   </div>
                   <div className="px-8 py-8 flex items-center">
-                    <p className="text-white/40 text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
+                    <p className="text-muted-2 text-sm leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>
                       {project.description}
                     </p>
                   </div>

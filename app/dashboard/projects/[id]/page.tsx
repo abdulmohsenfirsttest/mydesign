@@ -154,7 +154,7 @@ export default function ProjectDetailPage() {
 
   if (loading) return (
     <div className="p-8">
-      <p className="text-white/20 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p>
+      <p className="text-muted-4 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p>
     </div>
   );
 
@@ -172,21 +172,21 @@ export default function ProjectDetailPage() {
     m.due_date ? fmtDay(m.due_date) : null;
 
   const milestoneStatusDot = (status: string) =>
-    status === "Completed" ? "bg-white border-white" :
+    status === "Completed" ? "bg-foreground border-foreground" :
     status === "In Progress" ? "border-amber-400/80 bg-transparent" :
-    "border-white/25 bg-transparent";
+    "border-border bg-transparent";
 
   const milestoneLineColor = (status: string) =>
-    status === "Completed" ? "bg-white/40" : "bg-white/10";
+    status === "Completed" ? "bg-muted-2" : "bg-fill";
 
   return (
     <div className="p-8">
       <div className="mb-8">
         <Link href="/dashboard/projects"
-          className="text-white/30 text-xs hover:text-white/50 transition-colors mb-3 inline-block"
+          className="text-muted-3 text-xs hover:text-muted-2 transition-colors mb-3 inline-block"
           style={{ fontFamily: "var(--font-inter)" }}>← Projects</Link>
-        <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>{project.name}</h1>
-        <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>
+        <h1 className="text-3xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>{project.name}</h1>
+        <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>
           {project.type}{currentStage ? ` · ${currentStage}` : ""} · {progress}% complete
         </p>
       </div>
@@ -199,10 +199,10 @@ export default function ProjectDetailPage() {
         <div className="lg:col-span-2 space-y-6">
 
           {/* Milestone Plan */}
-          <div className="border border-white/[0.08] bg-[#161616] p-6">
-            <h2 className="text-white text-sm tracking-widest mb-6" style={{ fontFamily: "var(--font-inter)" }}>MILESTONE PLAN</h2>
+          <div className="border border-soft bg-surface p-6">
+            <h2 className="text-foreground text-sm tracking-widest mb-6" style={{ fontFamily: "var(--font-inter)" }}>MILESTONE PLAN</h2>
             {milestones.length === 0 ? (
-              <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No milestones set yet.</p>
+              <p className="text-muted-4 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No milestones set yet.</p>
             ) : (
               <div className="space-y-0">
                 {milestones.map((m, i) => (
@@ -215,10 +215,10 @@ export default function ProjectDetailPage() {
                     </div>
                     <div className="pb-6">
                       <div className="flex items-center gap-3 mb-1">
-                        <span className={`text-sm ${m.status === "In Progress" ? "text-white" : m.status === "Completed" ? "text-white/50" : "text-white/25"}`}
+                        <span className={`text-sm ${m.status === "In Progress" ? "text-foreground" : m.status === "Completed" ? "text-muted-2" : "text-muted-4"}`}
                           style={{ fontFamily: "var(--font-inter)" }}>{m.name}</span>
                         {milestoneDateLabel(m) && (
-                          <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+                          <span className="text-muted-4 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                             {milestoneDateLabel(m)}
                           </span>
                         )}
@@ -226,20 +226,20 @@ export default function ProjectDetailPage() {
                           <span className="text-xs border border-amber-400/30 text-amber-400/60 px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>Current</span>
                         )}
                         {m.status === "Completed" && (
-                          <span className="text-xs border border-white/10 text-white/30 px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>Done</span>
+                          <span className="text-xs border border-soft text-muted-3 px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>Done</span>
                         )}
                       </div>
                       {m.description && (
-                        <p className="text-white/30 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{m.description}</p>
+                        <p className="text-muted-3 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{m.description}</p>
                       )}
                       {m.files && m.files.length > 0 && (
                         <div className="mt-2 space-y-1.5">
                           {m.files.map((f, j) => (
                             <button key={j} onClick={() => downloadFile(f.url, f.name)}
-                              className="flex items-center gap-2 text-white/30 hover:text-white/60 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
+                              className="flex items-center gap-2 text-muted-3 hover:text-muted-1 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
                               <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                               <span className="text-xs truncate">{f.name}</span>
-                              {f.size && <span className="text-white/15 text-xs">{f.size}</span>}
+                              {f.size && <span className="text-muted-4 text-xs">{f.size}</span>}
                             </button>
                           ))}
                         </div>
@@ -253,17 +253,17 @@ export default function ProjectDetailPage() {
 
           {/* Proposal */}
           {proposal && (
-            <div className="border border-white/[0.08] bg-[#161616] p-6">
+            <div className="border border-soft bg-surface p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-white text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROPOSAL</h2>
+                <h2 className="text-foreground text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROPOSAL</h2>
                 {proposal.status === "approved" && (
-                  <span className="text-xs px-2.5 py-1 border border-white/20 text-white/50" style={{ fontFamily: "var(--font-inter)" }}>Approved</span>
+                  <span className="text-xs px-2.5 py-1 border border-border text-muted-2" style={{ fontFamily: "var(--font-inter)" }}>Approved</span>
                 )}
                 {proposal.status === "rejected" && (
-                  <span className="text-xs px-2.5 py-1 border border-white/10 text-white/30" style={{ fontFamily: "var(--font-inter)" }}>Rejected</span>
+                  <span className="text-xs px-2.5 py-1 border border-soft text-muted-3" style={{ fontFamily: "var(--font-inter)" }}>Rejected</span>
                 )}
                 {proposal.status === "sent" && (
-                  <span className="text-xs px-2.5 py-1 border border-white/50 text-white/70" style={{ fontFamily: "var(--font-inter)" }}>Awaiting Your Decision</span>
+                  <span className="text-xs px-2.5 py-1 border border-strong text-muted-1" style={{ fontFamily: "var(--font-inter)" }}>Awaiting Your Decision</span>
                 )}
               </div>
 
@@ -275,8 +275,8 @@ export default function ProjectDetailPage() {
                   { label: "TERMS & CONDITIONS", value: proposal.terms },
                 ] as { label: string; value: string | null }[]).map(sec => sec.value ? (
                   <div key={sec.label}>
-                    <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>{sec.label}</p>
-                    <p className="text-white/60 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{sec.value}</p>
+                    <p className="text-xs text-muted-3 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>{sec.label}</p>
+                    <p className="text-muted-1 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{sec.value}</p>
                   </div>
                 ) : null)}
               </div>
@@ -284,35 +284,35 @@ export default function ProjectDetailPage() {
               {proposal.pdf_url && (
                 <div className="mt-6">
                   <a href={proposal.pdf_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 py-2.5 px-3 border border-white/[0.06] bg-white/[0.02] text-white/50 hover:text-white/80 hover:border-white/15 transition-colors"
+                    className="inline-flex items-center gap-2 py-2.5 px-3 border border-soft bg-fill text-muted-2 hover:text-muted-1 hover:border-border transition-colors"
                     style={{ fontFamily: "var(--font-inter)" }}>
-                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <svg className="w-3.5 h-3.5 flex-shrink-0 text-muted-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     <span className="text-xs tracking-wide">Download quotation (PDF)</span>
                   </a>
                 </div>
               )}
 
               {proposal.status === "sent" && (
-                <div className="mt-6 pt-5 border-t border-white/[0.08]">
+                <div className="mt-6 pt-5 border-t border-soft">
                   <textarea value={proposalComment} onChange={e => setProposalComment(e.target.value)}
                     rows={3} placeholder="Add a comment (optional)"
-                    className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20 mb-4"
+                    className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4 mb-4"
                     style={{ fontFamily: "var(--font-inter)" }} />
                   <div className="flex items-center gap-3">
                     <button onClick={() => decideProposal("approved")} disabled={deciding}
-                      className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                      className="px-5 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
                       style={{ fontFamily: "var(--font-inter)" }}>{deciding ? "Saving..." : "Approve"}</button>
                     <button onClick={() => decideProposal("rejected")} disabled={deciding}
-                      className="px-5 py-2.5 border border-white/15 text-white/30 text-xs tracking-widest hover:border-white/30 transition-colors disabled:opacity-40"
+                      className="px-5 py-2.5 border border-border text-muted-3 text-xs tracking-widest hover:border-strong transition-colors disabled:opacity-40"
                       style={{ fontFamily: "var(--font-inter)" }}>Reject</button>
                   </div>
                 </div>
               )}
 
               {proposal.status !== "sent" && proposal.client_comment && (
-                <div className="mt-6 pt-5 border-t border-white/[0.08]">
-                  <p className="text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>YOUR COMMENT</p>
-                  <p className="text-white/50 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal.client_comment}</p>
+                <div className="mt-6 pt-5 border-t border-soft">
+                  <p className="text-xs text-muted-3 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>YOUR COMMENT</p>
+                  <p className="text-muted-2 text-xs leading-relaxed whitespace-pre-wrap" style={{ fontFamily: "var(--font-inter)" }}>{proposal.client_comment}</p>
                 </div>
               )}
             </div>
@@ -320,52 +320,52 @@ export default function ProjectDetailPage() {
 
           {/* Quotes */}
           {quotes.length > 0 && (
-            <div className="border border-white/[0.08] bg-[#161616] p-6">
-              <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>FINANCIAL OFFERS</h2>
+            <div className="border border-soft bg-surface p-6">
+              <h2 className="text-foreground text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>FINANCIAL OFFERS</h2>
               <div className="space-y-3">
                 {quotes.map(q => (
-                  <div key={q.id} className="border border-white/[0.06] bg-[#0f0f0f]">
+                  <div key={q.id} className="border border-soft bg-surface">
                     <button onClick={() => setExpanded(expanded === q.id ? null : q.id)}
-                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                      className="w-full flex items-center justify-between px-5 py-4 hover:bg-fill transition-colors">
                       <div className="text-left">
-                        <p className="text-white/80 text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.title}</p>
-                        <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+                        <p className="text-muted-1 text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.title}</p>
+                        <p className="text-muted-4 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                           {new Date(q.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-white/70 text-sm" style={{ fontFamily: "var(--font-playfair)" }}>SAR {quoteTotal(q.lines)}</span>
-                        <span className={`text-xs px-2.5 py-1 border ${q.status === "Signed" ? "border-white/20 text-white/40" : q.status === "Pending Signature" ? "border-white/50 text-white/70" : "border-white/10 text-white/20"}`}
+                        <span className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-playfair)" }}>SAR {quoteTotal(q.lines)}</span>
+                        <span className={`text-xs px-2.5 py-1 border ${q.status === "Signed" ? "border-border text-muted-2" : q.status === "Pending Signature" ? "border-strong text-muted-1" : "border-soft text-muted-4"}`}
                           style={{ fontFamily: "var(--font-inter)" }}>{q.status}</span>
-                        <svg className={`w-3.5 h-3.5 text-white/30 transition-transform ${expanded === q.id ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-3.5 h-3.5 text-muted-3 transition-transform ${expanded === q.id ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </button>
 
                     {expanded === q.id && (
-                      <div className="border-t border-white/[0.06] px-5 py-4">
+                      <div className="border-t border-soft px-5 py-4">
                         <div className="space-y-2 mb-4">
                           {q.lines.map((l, j) => (
                             <div key={j} className="flex justify-between text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-                              <span className="text-white/40">{l.item}</span>
-                              <span className="text-white/60">{l.amount}</span>
+                              <span className="text-muted-2">{l.item}</span>
+                              <span className="text-muted-1">{l.amount}</span>
                             </div>
                           ))}
-                          <div className="flex justify-between text-sm pt-3 border-t border-white/[0.08]" style={{ fontFamily: "var(--font-inter)" }}>
-                            <span className="text-white/60">Total</span>
-                            <span className="text-white">SAR {quoteTotal(q.lines)}</span>
+                          <div className="flex justify-between text-sm pt-3 border-t border-soft" style={{ fontFamily: "var(--font-inter)" }}>
+                            <span className="text-muted-1">Total</span>
+                            <span className="text-foreground">SAR {quoteTotal(q.lines)}</span>
                           </div>
                         </div>
 
                         {q.files?.length > 0 && (
                           <div className="space-y-2 mb-4">
                             {q.files.map((f, j) => (
-                              <div key={j} className="flex items-center gap-2 py-2 px-3 border border-white/[0.06] bg-white/[0.02]">
-                                <svg className="w-3.5 h-3.5 flex-shrink-0 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                <span className="flex-1 text-white/50 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</span>
-                                <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.size}</span>
-                                <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors ml-1">
+                              <div key={j} className="flex items-center gap-2 py-2 px-3 border border-soft bg-fill">
+                                <svg className="w-3.5 h-3.5 flex-shrink-0 text-muted-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span className="flex-1 text-muted-2 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</span>
+                                <span className="text-muted-4 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.size}</span>
+                                <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-muted-4 hover:text-muted-1 transition-colors ml-1">
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                 </a>
                               </div>
@@ -375,13 +375,13 @@ export default function ProjectDetailPage() {
 
                         {q.status === "Pending Signature" && (
                           <button onClick={() => signQuote(q.id)} disabled={signing === q.id}
-                            className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                            className="px-6 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
                             style={{ fontFamily: "var(--font-inter)" }}>
                             {signing === q.id ? "Signing..." : "Sign & Approve →"}
                           </button>
                         )}
                         {q.status === "Signed" && (
-                          <p className="text-white/30 text-xs flex items-center gap-2" style={{ fontFamily: "var(--font-inter)" }}>
+                          <p className="text-muted-3 text-xs flex items-center gap-2" style={{ fontFamily: "var(--font-inter)" }}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7"/></svg>
                             Signed
                           </p>
@@ -396,25 +396,25 @@ export default function ProjectDetailPage() {
 
           {/* Files */}
           {files.length > 0 && (
-            <div className="border border-white/[0.08] bg-[#161616] p-6">
-              <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>FILES & DELIVERABLES</h2>
+            <div className="border border-soft bg-surface p-6">
+              <h2 className="text-foreground text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>FILES & DELIVERABLES</h2>
               <div className="space-y-0">
                 {files.map((f, i) => (
-                  <div key={f.id} className={`flex items-center justify-between py-3 ${i < files.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
+                  <div key={f.id} className={`flex items-center justify-between py-3 ${i < files.length - 1 ? "border-b border-soft" : ""}`}>
                     <div className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-white/30 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                      <svg className="w-4 h-4 text-muted-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                       <div>
-                        <p className="text-white/70 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</p>
-                        <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+                        <p className="text-muted-1 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</p>
+                        <p className="text-muted-4 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                           {f.size} · {new Date(f.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors" title="Open">
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-muted-4 hover:text-muted-1 transition-colors" title="Open">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                       </a>
-                      <button onClick={() => downloadFile(f.url, f.name)} className="text-white/20 hover:text-white/60 transition-colors" title="Download">
+                      <button onClick={() => downloadFile(f.url, f.name)} className="text-muted-4 hover:text-muted-1 transition-colors" title="Download">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                       </button>
                     </div>
@@ -427,46 +427,46 @@ export default function ProjectDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-4">
-          <div className="border border-white/[0.08] bg-[#161616] p-5">
-            <h3 className="text-white/40 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>PROGRESS</h3>
-            <p className="text-3xl text-white font-light mb-3" style={{ fontFamily: "var(--font-playfair)" }}>{progress}%</p>
-            <div className="h-px bg-white/[0.08]">
-              <div className="h-px bg-white/50 transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div className="border border-soft bg-surface p-5">
+            <h3 className="text-muted-2 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>PROGRESS</h3>
+            <p className="text-3xl text-foreground font-light mb-3" style={{ fontFamily: "var(--font-playfair)" }}>{progress}%</p>
+            <div className="h-px bg-border-soft">
+              <div className="h-px bg-muted-2 transition-all duration-500" style={{ width: `${progress}%` }} />
             </div>
             {currentStage && (
-              <p className="text-white/25 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>Stage: {currentStage}</p>
+              <p className="text-muted-4 text-xs mt-2" style={{ fontFamily: "var(--font-inter)" }}>Stage: {currentStage}</p>
             )}
           </div>
 
           {project.status && (
-            <div className="border border-white/[0.08] bg-[#161616] p-5">
-              <h3 className="text-white/40 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>STATUS</h3>
-              <span className="text-xs border border-white/20 text-white/50 px-3 py-1.5 inline-block" style={{ fontFamily: "var(--font-inter)" }}>{project.status}</span>
+            <div className="border border-soft bg-surface p-5">
+              <h3 className="text-muted-2 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>STATUS</h3>
+              <span className="text-xs border border-border text-muted-2 px-3 py-1.5 inline-block" style={{ fontFamily: "var(--font-inter)" }}>{project.status}</span>
             </div>
           )}
 
           {spaces.length > 0 && (
-            <div className="border border-white/[0.08] bg-[#161616] p-5">
-              <h3 className="text-white/40 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>SPACES</h3>
+            <div className="border border-soft bg-surface p-5">
+              <h3 className="text-muted-2 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>SPACES</h3>
               <div className="space-y-0">
                 {spaces.map((s, i) => (
-                  <div key={s.id} className={`flex items-center justify-between py-2 ${i < spaces.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
-                    <span className="text-white/60 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.name}</span>
-                    <span className="text-white/35 text-xs tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>{Number(s.sqm).toLocaleString("en-US")} sqm</span>
+                  <div key={s.id} className={`flex items-center justify-between py-2 ${i < spaces.length - 1 ? "border-b border-soft" : ""}`}>
+                    <span className="text-muted-1 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.name}</span>
+                    <span className="text-muted-3 text-xs tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>{Number(s.sqm).toLocaleString("en-US")} sqm</span>
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between pt-3 mt-2 border-t border-white/[0.08]">
-                <span className="text-white/40 text-xs tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL</span>
-                <span className="text-white/70 text-sm tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>{spaces.reduce((sum, s) => sum + Number(s.sqm || 0), 0).toLocaleString("en-US")} sqm</span>
+              <div className="flex items-center justify-between pt-3 mt-2 border-t border-soft">
+                <span className="text-muted-2 text-xs tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL</span>
+                <span className="text-muted-1 text-sm tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>{spaces.reduce((sum, s) => sum + Number(s.sqm || 0), 0).toLocaleString("en-US")} sqm</span>
               </div>
             </div>
           )}
 
           {(project as any).description && (
-            <div className="border border-white/[0.08] bg-[#161616] p-5">
-              <h3 className="text-white/40 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>PROJECT INFO</h3>
-              <p className="text-white/50 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{(project as any).description}</p>
+            <div className="border border-soft bg-surface p-5">
+              <h3 className="text-muted-2 text-xs tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>PROJECT INFO</h3>
+              <p className="text-muted-2 text-xs leading-relaxed" style={{ fontFamily: "var(--font-inter)" }}>{(project as any).description}</p>
             </div>
           )}
         </div>

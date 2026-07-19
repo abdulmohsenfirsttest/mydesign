@@ -41,32 +41,32 @@ export default function BookPage() {
   return (
     <>
       <Navbar />
-      <main className="bg-[#0a0a0a] min-h-screen pt-24 pb-20">
+      <main className="bg-background min-h-screen pt-24 pb-20">
         <div className="max-w-4xl mx-auto px-6">
-          <p className="text-xs text-white/40 tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>APPOINTMENT</p>
-          <h1 className="text-4xl md:text-5xl text-white mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Book a Consultation</h1>
-          <p className="text-white/40 text-sm mb-12" style={{ fontFamily: "var(--font-inter)" }}>
+          <p className="text-xs text-muted-2 tracking-widest mb-3" style={{ fontFamily: "var(--font-inter)" }}>APPOINTMENT</p>
+          <h1 className="text-4xl md:text-5xl text-foreground mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Book a Consultation</h1>
+          <p className="text-muted-2 text-sm mb-12" style={{ fontFamily: "var(--font-inter)" }}>
             Schedule a meeting with our team to discuss your project.
           </p>
 
           {booked ? (
-            <div className="border border-white/10 p-12 text-center max-w-lg mx-auto">
-              <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center mx-auto mb-6">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="border border-soft p-12 text-center max-w-lg mx-auto">
+              <div className="w-14 h-14 rounded-full border border-border flex items-center justify-center mx-auto mb-6">
+                <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <h2 className="text-2xl text-white mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Appointment Confirmed</h2>
-              <p className="text-white/40 text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>{selectedService}</p>
-              <p className="text-white/60 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selectedDay} at {selectedTime}</p>
-              <div className="border-t border-white/[0.08] mt-8 pt-8">
-                <p className="text-white/50 text-sm mb-2" style={{ fontFamily: "var(--font-inter)" }}>Your client portal is ready.</p>
-                <p className="text-white/25 text-xs mb-6" style={{ fontFamily: "var(--font-inter)" }}>
+              <h2 className="text-2xl text-foreground mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Appointment Confirmed</h2>
+              <p className="text-muted-2 text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>{selectedService}</p>
+              <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selectedDay} at {selectedTime}</p>
+              <div className="border-t border-soft mt-8 pt-8">
+                <p className="text-muted-2 text-sm mb-2" style={{ fontFamily: "var(--font-inter)" }}>Your client portal is ready.</p>
+                <p className="text-muted-4 text-xs mb-6" style={{ fontFamily: "var(--font-inter)" }}>
                   Track your project, review meeting notes, access files, and approve deliverables — all in one place.
                 </p>
                 <Link
                   href={`/auth/login?phone=${encodeURIComponent(phone)}`}
-                  className="inline-block px-8 py-3 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+                  className="inline-block px-8 py-3 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}>
                   Access Your Portal →
                 </Link>
@@ -77,25 +77,25 @@ export default function BookPage() {
               <div className="lg:col-span-3 space-y-8">
                 {/* Step 1 - Service */}
                 <div>
-                  <h3 className="text-white text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>01 — SELECT SERVICE</h3>
-                  <p className="text-white/25 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>DESIGN</p>
+                  <h3 className="text-foreground text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>01 — SELECT SERVICE</h3>
+                  <p className="text-muted-4 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>DESIGN</p>
                   <div className="space-y-2 mb-6">
                     {designServices.map(s => (
                       <button key={s} onClick={() => setSelectedService(s)}
-                        className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-white text-white bg-white/5" : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"}`}
+                        className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-foreground text-foreground bg-fill" : "border-soft text-muted-2 hover:border-border hover:text-muted-1"}`}
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {s}
                       </button>
                     ))}
                   </div>
-                  <p className="text-white/25 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>MANAGEMENT</p>
+                  <p className="text-muted-4 text-xs mb-3 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>MANAGEMENT</p>
                   <div className="space-y-2">
                     {managementServices.map(s => (
                       <button key={s} onClick={() => setSelectedService(s)}
-                        className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-white text-white bg-white/5" : "border-white/10 text-white/50 hover:border-white/30 hover:text-white/80"}`}
+                        className={`w-full text-left px-5 py-4 border text-sm transition-colors ${selectedService === s ? "border-foreground text-foreground bg-fill" : "border-soft text-muted-2 hover:border-border hover:text-muted-1"}`}
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {s}
-                        <span className="block text-white/25 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>Handled by our Project Management team</span>
+                        <span className="block text-muted-4 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>Handled by our Project Management team</span>
                       </button>
                     ))}
                   </div>
@@ -103,11 +103,11 @@ export default function BookPage() {
 
                 {/* Step 2 - Date */}
                 <div>
-                  <h3 className="text-white text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>02 — SELECT DATE</h3>
+                  <h3 className="text-foreground text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>02 — SELECT DATE</h3>
                   <div className="grid grid-cols-7 gap-2">
                     {days.map(d => (
                       <button key={d.full} onClick={() => setSelectedDay(d.full)}
-                        className={`flex flex-col items-center py-3 border text-xs transition-colors ${selectedDay === d.full ? "border-white text-white bg-white/5" : "border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"}`}
+                        className={`flex flex-col items-center py-3 border text-xs transition-colors ${selectedDay === d.full ? "border-foreground text-foreground bg-fill" : "border-soft text-muted-2 hover:border-border hover:text-muted-1"}`}
                         style={{ fontFamily: "var(--font-inter)" }}>
                         <span>{d.label}</span>
                         <span className="text-base mt-1">{d.date}</span>
@@ -118,11 +118,11 @@ export default function BookPage() {
 
                 {/* Step 3 - Time */}
                 <div>
-                  <h3 className="text-white text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>03 — SELECT TIME</h3>
+                  <h3 className="text-foreground text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>03 — SELECT TIME</h3>
                   <div className="grid grid-cols-4 gap-2">
                     {times.map(t => (
                       <button key={t} onClick={() => setSelectedTime(t)}
-                        className={`py-3 border text-xs transition-colors ${selectedTime === t ? "border-white text-white bg-white/5" : "border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"}`}
+                        className={`py-3 border text-xs transition-colors ${selectedTime === t ? "border-foreground text-foreground bg-fill" : "border-soft text-muted-2 hover:border-border hover:text-muted-1"}`}
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {t}
                       </button>
@@ -133,37 +133,37 @@ export default function BookPage() {
 
               {/* Summary + Form */}
               <div className="lg:col-span-2">
-                <div className="border border-white/10 p-6 sticky top-24">
-                  <h3 className="text-white text-sm tracking-widest mb-6" style={{ fontFamily: "var(--font-inter)" }}>YOUR BOOKING</h3>
+                <div className="border border-soft p-6 sticky top-24">
+                  <h3 className="text-foreground text-sm tracking-widest mb-6" style={{ fontFamily: "var(--font-inter)" }}>YOUR BOOKING</h3>
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-                      <span className="text-white/40">Service</span>
-                      <span className="text-white/80 text-right max-w-[150px]">{selectedService || "—"}</span>
+                      <span className="text-muted-2">Service</span>
+                      <span className="text-muted-1 text-right max-w-[150px]">{selectedService || "—"}</span>
                     </div>
                     <div className="flex justify-between text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-                      <span className="text-white/40">Date</span>
-                      <span className="text-white/80">{selectedDay || "—"}</span>
+                      <span className="text-muted-2">Date</span>
+                      <span className="text-muted-1">{selectedDay || "—"}</span>
                     </div>
                     <div className="flex justify-between text-xs" style={{ fontFamily: "var(--font-inter)" }}>
-                      <span className="text-white/40">Time</span>
-                      <span className="text-white/80">{selectedTime || "—"}</span>
+                      <span className="text-muted-2">Time</span>
+                      <span className="text-muted-1">{selectedTime || "—"}</span>
                     </div>
                   </div>
                   <form onSubmit={handleBook} className="space-y-3">
                     <input type="text" required placeholder="Your name" value={name}
                       onChange={e => setName(e.target.value)}
-                      className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
+                      className="w-full bg-transparent border border-border text-foreground text-xs px-4 py-3 focus:outline-none focus:border-strong transition-colors placeholder-muted-4"
                       style={{ fontFamily: "var(--font-inter)" }} />
                     <input type="email" required placeholder="Email" value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
+                      className="w-full bg-transparent border border-border text-foreground text-xs px-4 py-3 focus:outline-none focus:border-strong transition-colors placeholder-muted-4"
                       style={{ fontFamily: "var(--font-inter)" }} />
                     <input type="tel" required placeholder="Phone / WhatsApp" value={phone}
                       onChange={e => setPhone(e.target.value)}
-                      className="w-full bg-transparent border border-white/20 text-white text-xs px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
+                      className="w-full bg-transparent border border-border text-foreground text-xs px-4 py-3 focus:outline-none focus:border-strong transition-colors placeholder-muted-4"
                       style={{ fontFamily: "var(--font-inter)" }} />
                     <button type="submit" disabled={!selectedService || !selectedDay || !selectedTime}
-                      className="w-full py-3 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30 mt-2"
+                      className="w-full py-3 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-30 mt-2"
                       style={{ fontFamily: "var(--font-inter)" }}>
                       Confirm Booking
                     </button>

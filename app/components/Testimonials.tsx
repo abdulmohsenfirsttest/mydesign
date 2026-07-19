@@ -15,10 +15,10 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="bg-[#0a0a0a] py-20 border-t border-white/10">
+    <section className="bg-background py-20 border-t border-soft">
       <div className="max-w-7xl mx-auto px-6">
         <h2
-          className="text-4xl md:text-5xl text-white mb-14 text-center"
+          className="text-4xl md:text-5xl text-foreground mb-14 text-center"
           style={{ fontFamily: "var(--font-playfair)" }}
         >
           Testimonials
@@ -27,16 +27,16 @@ export default function Testimonials() {
           {testimonials.map((t) => (
             <div
               key={t.name}
-              className="border border-white/15 p-8 flex flex-col justify-between"
+              className="border border-border p-8 flex flex-col justify-between"
             >
               <p
-                className="text-white/60 text-sm leading-relaxed mb-8 italic"
+                className="text-muted-1 text-sm leading-relaxed mb-8 italic"
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
                 &ldquo;{t.quote}&rdquo;
               </p>
               <p
-                className="text-white text-sm tracking-wide"
+                className="text-foreground text-sm tracking-wide"
                 style={{ fontFamily: "var(--font-inter)" }}
               >
                 {t.name}

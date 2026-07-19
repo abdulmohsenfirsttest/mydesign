@@ -9,10 +9,10 @@ const categories = [
 
 export default function Expertise() {
   return (
-    <section className="bg-[#0a0a0a] py-20">
+    <section className="bg-background py-20">
       <div className="max-w-7xl mx-auto px-6">
         <h2
-          className="text-4xl md:text-5xl text-white mb-12 text-center"
+          className="text-4xl md:text-5xl text-foreground mb-12 text-center"
           style={{ fontFamily: "var(--font-playfair)" }}
         >
           Our Expertise
@@ -39,7 +39,7 @@ export default function Expertise() {
         </div>
         <div className="flex justify-end mt-6">
           <button
-            className="text-xs text-white/40 border border-white/20 px-5 py-2 hover:border-white/60 hover:text-white/80 transition-colors tracking-widest"
+            className="text-xs text-muted-2 border border-border px-5 py-2 hover:border-strong hover:text-muted-1 transition-colors tracking-widest"
             style={{ fontFamily: "var(--font-inter)" }}
           >
             View All

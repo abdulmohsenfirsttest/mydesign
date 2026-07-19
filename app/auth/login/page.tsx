@@ -57,36 +57,36 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center gap-3 mb-10">
-          <div className="w-9 h-9 rounded-full border-2 border-white flex items-center justify-center">
-            <span className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-playfair)" }}>my</span>
+          <div className="w-9 h-9 rounded-full border-2 border-foreground flex items-center justify-center">
+            <span className="text-foreground font-bold text-sm" style={{ fontFamily: "var(--font-playfair)" }}>my</span>
           </div>
-          <span className="text-white font-semibold text-sm" style={{ fontFamily: "var(--font-inter)" }}>Design & Build</span>
+          <span className="text-foreground font-semibold text-sm" style={{ fontFamily: "var(--font-inter)" }}>Design & Build</span>
         </Link>
 
-        <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Sign In</h1>
-        <p className="text-white/40 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Clients and team — sign in with your email or phone.</p>
+        <h1 className="text-3xl text-foreground mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Sign In</h1>
+        <p className="text-muted-2 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Clients and team — sign in with your email or phone.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-white/40 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email or Phone</label>
+            <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email or Phone</label>
             <input type="text" required value={phone} onChange={e => setPhone(e.target.value)}
               placeholder="email@mysaudi.co or 05xxxxxxxx"
-              className="w-full bg-transparent border border-white/20 text-white text-sm px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
+              className="w-full bg-transparent border border-border text-foreground text-sm px-4 py-3 focus:outline-none focus:border-strong transition-colors placeholder-muted-4"
               style={{ fontFamily: "var(--font-inter)" }} />
           </div>
           <div>
-            <label className="block text-xs text-white/40 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Password</label>
+            <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Password</label>
             <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
               placeholder="••••••"
-              className="w-full bg-transparent border border-white/20 text-white text-sm px-4 py-3 focus:outline-none focus:border-white/60 transition-colors placeholder-white/20"
+              className="w-full bg-transparent border border-border text-foreground text-sm px-4 py-3 focus:outline-none focus:border-strong transition-colors placeholder-muted-4"
               style={{ fontFamily: "var(--font-inter)" }} />
           </div>
           {error && <p className="text-red-400/70 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>}
           <button type="submit" disabled={loading || !phone || !password}
-            className="w-full py-3 border border-white text-white text-sm tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-30"
+            className="w-full py-3 border border-foreground text-foreground text-sm tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-30"
             style={{ fontFamily: "var(--font-inter)" }}>
             {loading ? "Signing in..." : "Sign In"}
           </button>

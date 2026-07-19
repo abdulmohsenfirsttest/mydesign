@@ -39,22 +39,22 @@ const projects = [
 
 export default function Projects() {
   return (
-    <section id="projects" className="py-24 px-6 bg-neutral-950">
+    <section id="projects" className="py-24 px-6 bg-background">
       <div className="max-w-6xl mx-auto">
         <p className="text-sm uppercase tracking-[0.3em] text-indigo-400 mb-3 font-medium text-center">
           Portfolio
         </p>
-        <h2 className="text-4xl md:text-5xl font-bold text-white text-center mb-4">
+        <h2 className="text-4xl md:text-5xl font-bold text-foreground text-center mb-4">
           Selected Work
         </h2>
-        <p className="text-neutral-400 text-center max-w-xl mx-auto mb-16">
+        <p className="text-muted-1 text-center max-w-xl mx-auto mb-16">
           A collection of projects spanning branding, UI/UX, web design, and illustration.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <div
               key={project.title}
-              className="group rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-800 hover:border-indigo-500/50 transition-all duration-300 cursor-pointer"
+              className="group rounded-2xl overflow-hidden bg-surface border border-soft hover:border-indigo-500/50 transition-all duration-300 cursor-pointer"
             >
               <div
                 className={`h-48 bg-gradient-to-br ${project.color} flex items-center justify-center`}
@@ -67,10 +67,10 @@ export default function Projects() {
                 <span className="text-xs uppercase tracking-widest text-indigo-400 font-medium">
                   {project.category}
                 </span>
-                <h3 className="text-lg font-semibold text-white mt-1 mb-2">
+                <h3 className="text-lg font-semibold text-foreground mt-1 mb-2">
                   {project.title}
                 </h3>
-                <p className="text-neutral-400 text-sm leading-relaxed">
+                <p className="text-muted-1 text-sm leading-relaxed">
                   {project.description}
                 </p>
               </div>

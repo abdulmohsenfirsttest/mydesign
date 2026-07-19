@@ -15,13 +15,13 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="border border-white/[0.08] bg-[#161616] p-12 max-w-md w-full text-center">
-        <h1 className="text-2xl text-white mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Project updates</h1>
-        <p className="text-white/40 text-sm leading-relaxed mb-8" style={{ fontFamily: "var(--font-inter)" }}>
+      <div className="border border-soft bg-surface p-12 max-w-md w-full text-center">
+        <h1 className="text-2xl text-foreground mb-3" style={{ fontFamily: "var(--font-playfair)" }}>Project updates</h1>
+        <p className="text-muted-2 text-sm leading-relaxed mb-8" style={{ fontFamily: "var(--font-inter)" }}>
           Your project updates live on your project page.
         </p>
         <Link href="/dashboard/projects"
-          className="inline-block px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+          className="inline-block px-6 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors"
           style={{ fontFamily: "var(--font-inter)" }}>
           Go to projects →
         </Link>
