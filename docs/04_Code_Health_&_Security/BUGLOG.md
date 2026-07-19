@@ -76,6 +76,12 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **If it recurs:** check `select policyname, cmd from pg_policies where schemaname='storage' and tablename='objects';` — each bucket needs INSERT/SELECT/DELETE/UPDATE until Phase 2 replaces them with scoped policies. And surface the `remove()` error in deleteFile rather than discarding it.
 - **Related finding (same investigation, 2026-07-19):** the team re-reported "still unable to upload," but **zero upload requests reached Supabase after 2026-07-13** while a live anon probe (the browser's exact calls) succeeded — storage 200, `files` insert 201 — and v4.7.0 was confirmed live in the served JS. Conclusion: the failures never left their browsers; most likely stale tabs/cached pre-fix JS. Ask for a hard refresh + the exact page/error before reopening BUG-010.
 
+## BUG-013 — Couldn't sign in as owner when a client session was left over ✅ (v4.8.1)
+- **Symptom:** owner reported the sign-in page wouldn't log them into the owner dashboard — it kept landing on the (empty) client dashboard.
+- **Root cause:** the v4.7.0 login convenience — `useEffect` that `router.replace()`d anyone with an existing session straight to their portal — **trapped the form**. A leftover `client_id` in `localStorage` (from earlier client-login testing) bounced the user to `/dashboard` on mount, so the owner login form was never reachable. Compounded by logins not clearing the other role's keys, so a client + admin session could coexist.
+- **Fix (`app/auth/login/page.tsx`):** replaced the forced redirect with a **non-blocking banner** ("You're already signed in as X — Continue → / or sign in below to switch account") while keeping the form usable; and added `clearSession()` so a fresh sign-in wipes all session keys before setting the new role's — no more dual/shadowing sessions. The navbar's session-aware link (v4.7.0) still gives returning users their one-click way back in, so no convenience is lost.
+- **If it recurs:** never force-redirect away from the login form based solely on a stored session; check `app/auth/login/page.tsx` still renders the form when `existing` is set. Workaround for a stuck user: Sign Out from the dashboard (clears the session) or use a private window, then sign in.
+
 ---
 
 ## 🔭 Watch / risks (not bugs)

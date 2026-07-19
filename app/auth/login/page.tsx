@@ -11,13 +11,27 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // If a session already exists we OFFER a shortcut — we do NOT force a redirect,
+  // so the form stays reachable to sign in as a different account (e.g. switch
+  // from a client session to the owner). Admin takes precedence.
+  const [existing, setExisting] = useState<{ href: string; name: string } | null>(null);
 
-  // Already signed in? Don't make a returning visitor re-enter credentials —
-  // send them straight to their portal (their localStorage session persisted).
   useEffect(() => {
-    if (localStorage.getItem("admin_session")) router.replace("/admin");
-    else if (localStorage.getItem("client_id")) router.replace("/dashboard");
-  }, [router]);
+    const next = localStorage.getItem("admin_session")
+      ? { href: "/admin", name: localStorage.getItem("admin_name") || "the team portal" }
+      : localStorage.getItem("client_id")
+        ? { href: "/dashboard", name: localStorage.getItem("client_name") || "your dashboard" }
+        : null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of a client-only store
+    if (next) setExisting(next);
+  }, []);
+
+  // A fresh sign-in always starts from a clean slate, so a leftover session of
+  // the other kind can never shadow the new one (owner vs. client).
+  function clearSession() {
+    ["admin_session", "admin_id", "admin_name", "admin_role", "admin_permissions", "client_id", "client_name"]
+      .forEach(k => localStorage.removeItem(k));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,6 +47,7 @@ function LoginForm() {
     if (!admin) admin = (await supabase.from("admins").select("id, name, role, permissions").eq("email", id).eq("password", password).maybeSingle()).data;
 
     if (admin) {
+      clearSession();
       localStorage.setItem("admin_session", "true");
       localStorage.setItem("admin_id", admin.id);
       localStorage.setItem("admin_name", admin.name);
@@ -51,6 +66,7 @@ function LoginForm() {
       return;
     }
 
+    clearSession();
     localStorage.setItem("client_id", client.id);
     localStorage.setItem("client_name", client.name);
     router.push("/dashboard");
@@ -68,6 +84,14 @@ function LoginForm() {
 
         <h1 className="text-3xl text-foreground mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Sign In</h1>
         <p className="text-muted-2 text-sm mb-8" style={{ fontFamily: "var(--font-inter)" }}>Clients and team — sign in with your email or phone.</p>
+
+        {existing && (
+          <div className="mb-6 border border-border bg-fill px-4 py-3 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+            <span className="text-muted-1">You&apos;re already signed in as {existing.name}. </span>
+            <Link href={existing.href} className="text-foreground underline underline-offset-2">Continue →</Link>
+            <span className="text-muted-2"> or sign in below to switch account.</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
