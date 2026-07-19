@@ -44,6 +44,7 @@ export default function AdminSidebar() {
 
   useEffect(() => {
     const a = getAdmin();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the client-only session on mount
     setAdmin(a ? { name: a.name, role: a.role, permissions: a.permissions } : null);
   }, []);
 
@@ -96,13 +97,11 @@ export default function AdminSidebar() {
             <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(role)}</p>
           </div>
         </div>
-        <div className="flex items-center">
-          <button onClick={signOut} className="flex-1 flex items-center gap-3 px-3 py-2.5 text-muted-2 hover:text-muted-1 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-            Sign out
-          </button>
-          <ThemeToggle className="px-3 py-2.5" />
-        </div>
+        <ThemeToggle showLabel className="w-full px-3 py-2.5 text-xs text-muted-2 hover:text-foreground hover:bg-fill rounded-sm mb-0.5" />
+        <button onClick={signOut} className="w-full inline-flex items-center gap-3 px-3 py-2.5 text-muted-2 hover:text-muted-1 text-xs transition-colors rounded-sm" style={{ fontFamily: "var(--font-inter)" }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Sign out
+        </button>
       </div>
     </aside>
   );

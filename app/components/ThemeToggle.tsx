@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
  * light mode sets data-theme="light" on <html> and persists to localStorage,
  * mirroring the anti-FOUC script in app/layout.tsx.
  */
-export default function ThemeToggle({ className = "" }: { className?: string }) {
+export default function ThemeToggle({ className = "", showLabel = false }: { className?: string; showLabel?: boolean }) {
   // null until mounted so the server render (which can't know the theme)
   // matches the first client render — the icon only appears after mount.
   const [theme, setTheme] = useState<"dark" | "light" | null>(null);
@@ -37,10 +37,10 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
       type="button"
       onClick={toggle}
       aria-label="Toggle light/dark mode"
-      className={`transition-colors ${className || "text-muted-2 hover:text-foreground"}`}
+      className={`inline-flex items-center gap-3 transition-colors ${className || "text-muted-2 hover:text-foreground"}`}
     >
-      {/* 16px placeholder before mount keeps layout stable */}
-      <span className="block w-4 h-4">
+      {/* fixed 16px box reserves space before mount so there's no layout shift */}
+      <span className="w-4 h-4 flex items-center justify-center shrink-0">
         {theme === "dark" && (
           // Sun: shown in dark mode, meaning "switch to light"
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -55,6 +55,11 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
           </svg>
         )}
       </span>
+      {showLabel && (
+        <span style={{ fontFamily: "var(--font-inter)" }}>
+          {theme === "dark" ? "Light mode" : theme === "light" ? "Dark mode" : ""}
+        </span>
+      )}
     </button>
   );
 }
