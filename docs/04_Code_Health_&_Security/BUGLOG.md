@@ -82,6 +82,13 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **Fix (`app/auth/login/page.tsx`):** replaced the forced redirect with a **non-blocking banner** ("You're already signed in as X — Continue → / or sign in below to switch account") while keeping the form usable; and added `clearSession()` so a fresh sign-in wipes all session keys before setting the new role's — no more dual/shadowing sessions. The navbar's session-aware link (v4.7.0) still gives returning users their one-click way back in, so no convenience is lost.
 - **If it recurs:** never force-redirect away from the login form based solely on a stored session; check `app/auth/login/page.tsx` still renders the form when `existing` is set. Workaround for a stuck user: Sign Out from the dashboard (clears the session) or use a private window, then sign in.
 
+## BUG-014 — Couldn't add/edit staff: no write policy on `admins` ✅ (v4.8.2)
+- **Symptom:** creating or editing a staff account on the Staff & Permissions page failed with *"new row violates row-level security policy for table admins."*
+- **Root cause:** `admins` had RLS enabled with only `admins_select using(true)` — a read policy. Login (a SELECT) worked, but INSERT/UPDATE/DELETE had no policy → denied. (This is also why existing staff had to be seeded directly via SQL, not the app.)
+- **Fix:** added `admins_insert` / `admins_update` / `admins_delete` (anon, `using/with check (true)`) — migration `0009_admins_write_policies.sql`. Verified live: anon insert into `admins` now succeeds (rolled-back probe). Owner chose the quick unblock over a server-side path.
+- **⚠️ Security note:** this lets anyone with the public anon key write the credentials table — tracked as escalated debt in SECURITY.md; Security Phase 2 must move staff management server-side (service role) + hash passwords, then revoke anon read/write on `admins`.
+- **If it recurs:** `select policyname, cmd from pg_policies where tablename='admins';` should list select/insert/update/delete. Same lesson as BUG-010/012 — a table with RLS on needs a policy per operation the app performs.
+
 ---
 
 ## 🔭 Watch / risks (not bugs)
