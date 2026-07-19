@@ -69,6 +69,13 @@ A running record of bugs/issues hit (or caught in review) for MyDesign — root 
 - **Fix:** made the navbar session-aware (shows "My Dashboard"/"Admin Panel" when a session exists, behind a mounted-default that matches the server render to avoid hydration mismatch) and made `/auth/login` redirect an already-logged-in visitor to their portal.
 - **If it recurs:** confirm it's affordance, not auth — check `localStorage` still holds `client_id` / `admin_session` after navigating to `/`; the fix lives in `Navbar.tsx` (session read) and `app/auth/login/page.tsx` (redirect). Note there is still **no session expiry** (localStorage never expires) — a real timeout only arrives with Security Phase 2 / Supabase Auth.
 
+## BUG-012 — File deletion silently failed: no DELETE policy on storage buckets ✅ (v4.7.1)
+- **Symptom:** deleting a file removed it from the list but the object stayed in the bucket (still downloadable by URL) — the source of the orphaned objects noticed on 2026-07-13.
+- **Root cause:** `storage.objects` only ever had **INSERT + SELECT** policies for the `files`/`meetings`/`quotes` buckets. Every `storage.remove()` returned a 400 the code discards (`app/admin/uploads/page.tsx` deleteFile ignores the remove result), so deletes half-worked: metadata row gone, object left behind.
+- **Fix:** added `Public delete` + `Public update` policies for all three buckets (migration `0008_storage_delete_update_policies.sql`), matching the existing permissive posture until Security Phase 2. Verified live: an anon Storage-API delete now returns 200.
+- **If it recurs:** check `select policyname, cmd from pg_policies where schemaname='storage' and tablename='objects';` — each bucket needs INSERT/SELECT/DELETE/UPDATE until Phase 2 replaces them with scoped policies. And surface the `remove()` error in deleteFile rather than discarding it.
+- **Related finding (same investigation, 2026-07-19):** the team re-reported "still unable to upload," but **zero upload requests reached Supabase after 2026-07-13** while a live anon probe (the browser's exact calls) succeeded — storage 200, `files` insert 201 — and v4.7.0 was confirmed live in the served JS. Conclusion: the failures never left their browsers; most likely stale tabs/cached pre-fix JS. Ask for a hard refresh + the exact page/error before reopening BUG-010.
+
 ---
 
 ## 🔭 Watch / risks (not bugs)

@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.7.1 | 2026-07-19 | PATCH | **Storage DELETE/UPDATE policies** (migration `0008`): the three buckets only ever had INSERT+SELECT, so the app's file-delete silently failed with a 400 and left orphaned objects; verified uploads themselves healthy end-to-end (live anon probe: storage 200, insert 201) — the team's "still can't upload" report reached zero requests server-side, pointing at stale browser tabs/cache, not the app |
 | v4.7.0 | 2026-07-13 | MINOR | **Testing-feedback UX**: the marketing navbar is now **session-aware** (shows "My Dashboard"/"Admin Panel" when logged in; already-logged-in visitors skip the login form) so returning users stop re-authenticating; and the **New Milestone form takes a deliverable** so a milestone can be created **Completed in one step** — "Completed" is greyed out with inline guidance until a file is attached (no more post-submit red wall) |
 | v4.6.1 | 2026-07-13 | PATCH | **Fix broken file uploads**: `public.files` had RLS enabled with no policy (out-of-band change) → uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`), and the Upload page now surfaces any storage/insert error instead of swallowing it |
 | v4.6.0 | 2026-07-05 | MINOR | Approving a price **auto-fills the client proposal** (+ reopens it to draft) so the client sees the new number in one Send; builder pre-fills pricing |
@@ -193,6 +194,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Why:** testers reported "we have to log in again when we return to the main page" (the session was never actually lost — it was a navbar affordance gap) and hit the milestone "can't start as Completed" wall when trying to post a finished moodboard.
 - **Schema:** none — the deliverable writes to the existing `milestones.files` jsonb (migration 0002); the navbar reads the existing `localStorage` session.
 - **Decision:** MINOR. The "re-login" complaint is fixed as UX, not auth — the localStorage model is unchanged (client-side enforcement, Security Phase 2 still pending). The milestone form now supports create-and-complete-in-one-step while preserving the deliverable-before-Completed rule, just enforced *before* submit rather than after.
+
+### v4.7.1 · Storage DELETE/UPDATE policies + upload-report verification
+- **What:** Investigating the team's follow-up "still unable to upload" report: verified **v4.7.0 is live** (new navbar + milestone strings present in the served JS), the `files` table is still RLS-off (the v4.6.1 fix held), and a live anon probe — the browser's exact calls — succeeded (storage upload HTTP 200, `public.files` insert HTTP 201). **Zero upload requests reached Supabase after 2026-07-13**, so the reported failures never left the testers' browsers (most likely stale tabs/cached pre-fix JS). The probe surfaced a real adjacent gap: the buckets had **no DELETE/UPDATE policies**, so the app's file-delete silently 400'd and orphaned objects (BUG-012). Added `Public delete`/`Public update` policies for `files`/`meetings`/`quotes` via migration `0008`.
+- **Why:** keep the repo in lockstep with the live DB (the 0008 policies were applied in production during diagnosis) and close the orphaned-objects gap found on 2026-07-13.
+- **Schema:** migration `0008_storage_delete_update_policies.sql` (idempotent policy creation; no table changes).
+- **Decision:** PATCH — permissive-parity fix, same posture as INSERT/SELECT until Security Phase 2 replaces all bucket policies with scoped ones. Light/dark mode was **not** part of any deploy yet (team expectation gap) — it now begins on its own branch.
 
 ---
 
