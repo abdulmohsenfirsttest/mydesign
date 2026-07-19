@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.8.0` — **light/dark display modes** (semantic 12-token theme; toggle in marketing navbar + client dashboard sidebar; light = warm off-white with higher-contrast text for sunlight readability; photographic overlays stay dark; **admin deliberately stays dark**; owner-approved via Vercel branch preview). On top of v4.7.1 (storage delete/update policies, BUG-012), v4.7.0 (session-aware navbar + one-step milestone deliverable), v4.6.1 (file-upload RLS fix), v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
-- **Last session record:** `SES-2026-011`
-- **Next session record:** `SES-2026-012`
+- **Current version:** `v4.9.0` — **Upload Files tab in the Project Hub** (per-project, shared to the client portal, with "Sent <date, time>" per file) **+ light/dark across the whole designer/admin dashboard** (labeled Light/Dark button in the sidebar; raised dark contrast; theme-aware date pickers). On top of v4.8.1 (owner-login fix), v4.8.2 (staff-management/admins-RLS fix). Previously `v4.8.0` — **light/dark display modes** (semantic 12-token theme; toggle in marketing navbar + client dashboard sidebar; light = warm off-white with higher-contrast text for sunlight readability; photographic overlays stay dark; **admin deliberately stays dark**; owner-approved via Vercel branch preview). On top of v4.7.1 (storage delete/update policies, BUG-012), v4.7.0 (session-aware navbar + one-step milestone deliverable), v4.6.1 (file-upload RLS fix), v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
+- **Last session record:** `SES-2026-012`
+- **Next session record:** `SES-2026-013`
 
 ---
 
