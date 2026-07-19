@@ -15,11 +15,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [path, router]);
 
   if (path === "/admin/login") {
-    return <div className="min-h-screen bg-[#0a0a0a]">{children}</div>;
+    return <div className="min-h-screen bg-background">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
       <AdminSidebar />
       <div className="ml-56">
         <main className="min-h-screen">{children}</main>

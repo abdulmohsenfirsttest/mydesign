@@ -83,27 +83,27 @@ export default function UploadsPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Upload Files</h1>
-        <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Share files and deliverables directly to a client&apos;s portal.</p>
+        <h1 className="text-3xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Upload Files</h1>
+        <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Share files and deliverables directly to a client&apos;s portal.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="border border-white/[0.08] bg-[#161616] p-6">
-          <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>UPLOAD TO CLIENT</h2>
+        <div className="border border-soft bg-surface p-6">
+          <h2 className="text-foreground text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>UPLOAD TO CLIENT</h2>
 
           <div className="space-y-3 mb-5">
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Client</label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Client</label>
               <select required value={selectedClient} onChange={e => { setSelectedClient(e.target.value); setSelectedProject(""); }}
-                className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-3 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)" }}>
+                className="w-full bg-surface-2 border border-border text-muted-1 text-xs px-3 py-3 focus:outline-none focus:border-strong" style={{ fontFamily: "var(--font-inter)" }}>
                 <option value="">Select client...</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Project (optional)</label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Project (optional)</label>
               <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
-                className="w-full bg-[#1e1e1e] border border-white/15 text-white/70 text-xs px-3 py-3 focus:outline-none focus:border-white/40" style={{ fontFamily: "var(--font-inter)" }}>
+                className="w-full bg-surface-2 border border-border text-muted-1 text-xs px-3 py-3 focus:outline-none focus:border-strong" style={{ fontFamily: "var(--font-inter)" }}>
                 <option value="">No project</option>
                 {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
@@ -115,16 +115,16 @@ export default function UploadsPage() {
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
             onClick={() => selectedClient && fileRef.current?.click()}
-            className={`border-2 border-dashed p-10 text-center transition-colors ${selectedClient ? "cursor-pointer" : "cursor-not-allowed opacity-40"} ${dragging ? "border-white/40 bg-white/[0.03]" : "border-white/10 hover:border-white/25"}`}>
+            className={`border-2 border-dashed p-10 text-center transition-colors ${selectedClient ? "cursor-pointer" : "cursor-not-allowed opacity-40"} ${dragging ? "border-strong bg-fill" : "border-soft hover:border-border"}`}>
             {uploading ? (
-              <p className="text-white/50 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Uploading...</p>
+              <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Uploading...</p>
             ) : (
               <>
-                <svg className="w-8 h-8 text-white/20 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-muted-2 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
-                <p className="text-white/30 text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>Drag & drop or click to browse</p>
-                <p className="text-white/15 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{selectedClient ? "PDF, JPG, PNG, DWG — any size" : "Select a client first"}</p>
+                <p className="text-muted-2 text-sm mb-1" style={{ fontFamily: "var(--font-inter)" }}>Drag & drop or click to browse</p>
+                <p className="text-muted-3 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{selectedClient ? "PDF, JPG, PNG, DWG — any size" : "Select a client first"}</p>
               </>
             )}
           </div>
@@ -134,22 +134,22 @@ export default function UploadsPage() {
           )}
         </div>
 
-        <div className="border border-white/[0.08] bg-[#161616] p-6">
-          <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>RECENTLY UPLOADED</h2>
+        <div className="border border-soft bg-surface p-6">
+          <h2 className="text-foreground text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>RECENTLY UPLOADED</h2>
           {files.length === 0 ? (
-            <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No files uploaded yet.</p>
+            <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No files uploaded yet.</p>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {files.map(f => (
-                <div key={f.id} className="flex items-start justify-between py-3 border-b border-white/[0.06] last:border-0 gap-3">
+                <div key={f.id} className="flex items-start justify-between py-3 border-b border-soft last:border-0 gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/60 text-xs mb-0.5 truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</p>
-                    <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+                    <p className="text-muted-1 text-xs mb-0.5 truncate" style={{ fontFamily: "var(--font-inter)" }}>{f.name}</p>
+                    <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                       {f.clients?.name ?? "—"} {f.projects?.name ? `· ${f.projects.name}` : ""} · {f.size}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors" title="Open">
+                    <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-muted-2 hover:text-muted-1 transition-colors" title="Open">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                     </a>
                     <button onClick={() => deleteFile(f.id, f.url)} disabled={deleting === f.id}

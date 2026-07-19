@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import ThemeToggle from "../ThemeToggle";
 import { getAdmin, roleLabel, effectiveAreas, type Role, type Area } from "@/lib/roles";
 
 type NavItem = { href: string; label: string; area?: Area; icon: React.ReactNode };
@@ -62,15 +63,15 @@ export default function AdminSidebar() {
   const initial = (admin?.name?.trim()?.[0] ?? "A").toUpperCase();
 
   return (
-    <aside className="fixed left-0 top-0 bottom-0 w-56 bg-[#0f0f0f] border-r border-white/[0.06] flex flex-col z-40">
-      <div className="px-5 h-16 flex items-center justify-between border-b border-white/[0.06]">
+    <aside className="fixed left-0 top-0 bottom-0 w-56 bg-surface border-r border-soft flex flex-col z-40">
+      <div className="px-5 h-16 flex items-center justify-between border-b border-soft">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full border border-white/60 flex items-center justify-center">
-            <span className="text-white text-xs font-bold" style={{ fontFamily: "var(--font-playfair)" }}>my</span>
+          <div className="w-7 h-7 rounded-full border border-strong flex items-center justify-center">
+            <span className="text-foreground text-xs font-bold" style={{ fontFamily: "var(--font-playfair)" }}>my</span>
           </div>
-          <span className="text-white text-xs font-medium tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>Dashboard</span>
+          <span className="text-foreground text-xs font-medium tracking-wide" style={{ fontFamily: "var(--font-inter)" }}>Dashboard</span>
         </Link>
-        <span className="text-xs bg-white/10 text-white/50 px-2 py-0.5 rounded-sm" style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(role).split(" ")[0]}</span>
+        <span className="text-xs bg-fill text-muted-2 px-2 py-0.5 rounded-sm" style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(role).split(" ")[0]}</span>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -78,7 +79,7 @@ export default function AdminSidebar() {
           const active = path === item.href || (item.href !== "/admin" && path.startsWith(item.href));
           return (
             <Link key={item.href} href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 text-xs transition-colors rounded-sm ${active ? "text-white bg-white/[0.07]" : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 text-xs transition-colors rounded-sm ${active ? "text-foreground bg-fill" : "text-muted-2 hover:text-foreground hover:bg-fill"}`}
               style={{ fontFamily: "var(--font-inter)" }}>
               {item.icon}
               {item.label}
@@ -87,18 +88,21 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-white/[0.06]">
+      <div className="px-3 py-4 border-t border-soft">
         <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
-          <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold" style={{ fontFamily: "var(--font-inter)" }}>{initial}</div>
+          <div className="w-7 h-7 rounded-full bg-fill flex items-center justify-center text-foreground text-xs font-bold" style={{ fontFamily: "var(--font-inter)" }}>{initial}</div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{admin?.name || "—"}</p>
-            <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(role)}</p>
+            <p className="text-foreground text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{admin?.name || "—"}</p>
+            <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{roleLabel(role)}</p>
           </div>
         </div>
-        <button onClick={signOut} className="w-full flex items-center gap-3 px-3 py-2.5 text-white/30 hover:text-white/60 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-          Sign out
-        </button>
+        <div className="flex items-center">
+          <button onClick={signOut} className="flex-1 flex items-center gap-3 px-3 py-2.5 text-muted-2 hover:text-muted-1 text-xs transition-colors" style={{ fontFamily: "var(--font-inter)" }}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Sign out
+          </button>
+          <ThemeToggle className="px-3 py-2.5" />
+        </div>
       </div>
     </aside>
   );

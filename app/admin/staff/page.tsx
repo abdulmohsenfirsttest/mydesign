@@ -15,10 +15,10 @@ function AreaToggles({ areas, onToggle }: { areas: Area[]; onToggle: (a: Area) =
         const on = areas.includes(a.key);
         return (
           <button key={a.key} type="button" onClick={() => onToggle(a.key)}
-            className={`flex items-center gap-2 px-3 py-2 border text-xs text-left transition-colors ${on ? "border-white/40 text-white/80 bg-white/[0.04]" : "border-white/10 text-white/30 hover:border-white/25"}`}
+            className={`flex items-center gap-2 px-3 py-2 border text-xs text-left transition-colors ${on ? "border-strong text-muted-1 bg-fill" : "border-soft text-muted-2 hover:border-border"}`}
             style={{ fontFamily: "var(--font-inter)" }}>
-            <span className={`w-3.5 h-3.5 border flex items-center justify-center flex-shrink-0 ${on ? "border-white bg-white" : "border-white/30"}`}>
-              {on && <svg className="w-2.5 h-2.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+            <span className={`w-3.5 h-3.5 border flex items-center justify-center flex-shrink-0 ${on ? "border-foreground bg-foreground" : "border-border"}`}>
+              {on && <svg className="w-2.5 h-2.5 text-background" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
             </span>
             {a.label}
           </button>
@@ -102,16 +102,16 @@ export default function StaffPage() {
     setDeleting(null);
   }
 
-  if (authorized === null) return <div className="p-8"><p className="text-white/20 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p></div>;
+  if (authorized === null) return <div className="p-8"><p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p></div>;
   if (!authorized) return (
     <div className="p-8">
-      <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Staff & Permissions</h1>
-      <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>You don&apos;t have access to manage staff.</p>
+      <h1 className="text-3xl text-foreground mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Staff & Permissions</h1>
+      <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>You don&apos;t have access to manage staff.</p>
     </div>
   );
 
   const roleBadge = (r: string) =>
-    r === "manager" ? "border-white/25 text-white/60" :
+    r === "manager" ? "border-border text-muted-1" :
     r === "designer" ? "border-blue-400/30 text-blue-300/70" :
     "border-amber-400/30 text-amber-300/70";
 
@@ -119,74 +119,74 @@ export default function StaffPage() {
     <div className="p-8 max-w-3xl">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Staff &amp; Permissions</h1>
-          <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Create accounts, assign roles, and set exactly which sections each person can see.</p>
+          <h1 className="text-3xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Staff &amp; Permissions</h1>
+          <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Create accounts, assign roles, and set exactly which sections each person can see.</p>
         </div>
         <button onClick={() => { setShowForm(!showForm); setError(""); }}
-          className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors flex-shrink-0"
+          className="px-5 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors flex-shrink-0"
           style={{ fontFamily: "var(--font-inter)" }}>+ Add Staff</button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleAdd} className="border border-white/[0.08] bg-[#161616] p-6 mb-6">
-          <h2 className="text-white text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>NEW STAFF MEMBER</h2>
+        <form onSubmit={handleAdd} className="border border-soft bg-surface p-6 mb-6">
+          <h2 className="text-foreground text-sm tracking-widest mb-5" style={{ fontFamily: "var(--font-inter)" }}>NEW STAFF MEMBER</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Name</label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Name</label>
               <input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 placeholder="e.g. Hiba"
-                className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4"
                 style={{ fontFamily: "var(--font-inter)" }} />
             </div>
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email (login)</label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Email (login)</label>
               <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder="name@mysaudi.co"
-                className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4"
                 style={{ fontFamily: "var(--font-inter)" }} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone (optional)</label>
+                <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Phone (optional)</label>
                 <input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                   placeholder="05xxxxxxxx"
-                  className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                  className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4"
                   style={{ fontFamily: "var(--font-inter)" }} />
               </div>
               <div>
-                <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Password</label>
+                <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Password</label>
                 <input required value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                  className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4"
                   style={{ fontFamily: "var(--font-inter)" }} />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role <span className="text-white/15 normal-case tracking-normal">(sets default access)</span></label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role <span className="text-muted-3 normal-case tracking-normal">(sets default access)</span></label>
               <select value={form.role} onChange={(e) => { const r = e.target.value as Role; setForm((f) => ({ ...f, role: r, areas: roleDefaultAreas(r) })); }}
-                className="w-full bg-[#161616] border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40"
+                className="w-full bg-surface border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong"
                 style={{ fontFamily: "var(--font-inter)" }}>
                 {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see <span className="text-white/15 normal-case tracking-normal">(Overview is always visible)</span></label>
+              <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see <span className="text-muted-3 normal-case tracking-normal">(Overview is always visible)</span></label>
               <AreaToggles areas={form.areas} onToggle={(a) => setForm((f) => ({ ...f, areas: toggle(f.areas, a) }))} />
             </div>
           </div>
           {error && <p className="text-red-400/70 text-xs mt-3" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>}
           <div className="flex gap-3 mt-5">
             <button type="submit" disabled={saving}
-              className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+              className="px-6 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
               style={{ fontFamily: "var(--font-inter)" }}>{saving ? "Adding..." : "Add Staff"}</button>
             <button type="button" onClick={() => { setShowForm(false); setError(""); }}
-              className="px-6 py-2.5 border border-white/15 text-white/30 text-xs hover:border-white/30 transition-colors"
+              className="px-6 py-2.5 border border-border text-muted-2 text-xs hover:border-border transition-colors"
               style={{ fontFamily: "var(--font-inter)" }}>Cancel</button>
           </div>
         </form>
       )}
 
       {staff.length === 0 ? (
-        <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No staff yet.</p>
+        <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No staff yet.</p>
       ) : (
         <div className="space-y-3">
           {staff.map((s) => {
@@ -194,13 +194,13 @@ export default function StaffPage() {
             const areas = effectiveAreas({ role: s.role as Role, permissions: s.permissions });
             const editing = editingId === s.id;
             return (
-              <div key={s.id} className="border border-white/[0.08] bg-[#161616]">
+              <div key={s.id} className="border border-soft bg-surface">
                 <div className="flex items-center justify-between px-5 py-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ fontFamily: "var(--font-inter)" }}>{(s.name?.[0] ?? "?").toUpperCase()}</div>
+                    <div className="w-8 h-8 rounded-full bg-fill flex items-center justify-center text-foreground text-xs font-bold flex-shrink-0" style={{ fontFamily: "var(--font-inter)" }}>{(s.name?.[0] ?? "?").toUpperCase()}</div>
                     <div className="min-w-0">
-                      <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{s.name}{isOwner && <span className="text-white/25"> · Owner</span>}</p>
-                      <p className="text-white/25 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{s.email || s.phone || "—"}</p>
+                      <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{s.name}{isOwner && <span className="text-muted-2"> · Owner</span>}</p>
+                      <p className="text-muted-2 text-xs truncate" style={{ fontFamily: "var(--font-inter)" }}>{s.email || s.phone || "—"}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
@@ -208,7 +208,7 @@ export default function StaffPage() {
                     {!isOwner && (
                       <>
                         <button onClick={() => (editing ? setEditingId(null) : openEditor(s))}
-                          className="text-white/30 text-xs border border-white/10 px-2.5 py-1 hover:border-white/30 hover:text-white/60 transition-colors"
+                          className="text-muted-2 text-xs border border-soft px-2.5 py-1 hover:border-border hover:text-muted-1 transition-colors"
                           style={{ fontFamily: "var(--font-inter)" }}>{editing ? "Close" : "Permissions"}</button>
                         <button onClick={() => remove(s.id)} disabled={deleting === s.id}
                           className="text-red-400/30 hover:text-red-400/70 transition-colors disabled:opacity-30" title="Remove">
@@ -222,40 +222,40 @@ export default function StaffPage() {
                 {/* current access tags */}
                 <div className="px-5 pb-4 -mt-1 flex flex-wrap gap-1.5">
                   {isOwner ? (
-                    <span className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Full access</span>
+                    <span className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Full access</span>
                   ) : areas.length === 0 ? (
-                    <span className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Overview only</span>
+                    <span className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>Overview only</span>
                   ) : (
                     AREAS.filter((a) => areas.includes(a.key)).map((a) => (
-                      <span key={a.key} className="text-white/40 text-xs border border-white/10 px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>{a.label}</span>
+                      <span key={a.key} className="text-muted-1 text-xs border border-soft px-2 py-0.5" style={{ fontFamily: "var(--font-inter)" }}>{a.label}</span>
                     ))
                   )}
                 </div>
 
                 {/* per-row permission editor */}
                 {editing && (
-                  <div className="border-t border-white/[0.06] px-5 py-4 space-y-4">
+                  <div className="border-t border-soft px-5 py-4 space-y-4">
                     <div>
-                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role</label>
+                      <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Role</label>
                       <select value={editRole} onChange={(e) => { const r = e.target.value as Role; setEditRole(r); setEditAreas(roleDefaultAreas(r)); }}
-                        className="w-full bg-[#161616] border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40"
+                        className="w-full bg-surface border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong"
                         style={{ fontFamily: "var(--font-inter)" }}>
                         {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see</label>
+                      <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Can see</label>
                       <AreaToggles areas={editAreas} onToggle={(a) => setEditAreas((prev) => toggle(prev, a))} />
                     </div>
                     <div className="flex gap-3">
                       <button onClick={saveEditor} disabled={savingEdit}
-                        className="px-6 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                        className="px-6 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
                         style={{ fontFamily: "var(--font-inter)" }}>{savingEdit ? "Saving..." : "Save permissions"}</button>
                       <button onClick={() => setEditingId(null)}
-                        className="px-6 py-2.5 border border-white/15 text-white/30 text-xs hover:border-white/30 transition-colors"
+                        className="px-6 py-2.5 border border-border text-muted-2 text-xs hover:border-border transition-colors"
                         style={{ fontFamily: "var(--font-inter)" }}>Cancel</button>
                     </div>
-                    <p className="text-white/20 text-xs" style={{ fontFamily: "var(--font-inter)" }}>They&apos;ll see the change next time they sign in.</p>
+                    <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>They&apos;ll see the change next time they sign in.</p>
                   </div>
                 )}
               </div>

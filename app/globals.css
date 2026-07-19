@@ -2,6 +2,7 @@
 
 :root {
   /* Dark theme — the default; matches the site's original look. */
+  color-scheme: dark; /* native controls (date/time pickers, scrollbars) follow the theme */
   --background: #0a0a0a;
   --foreground: #ffffff;
   --surface: #161616;
@@ -9,10 +10,10 @@
   --border-strong: rgba(255, 255, 255, 0.45);
   --border: rgba(255, 255, 255, 0.18);
   --border-soft: rgba(255, 255, 255, 0.08);
-  --muted-1: rgba(255, 255, 255, 0.75);
-  --muted-2: rgba(255, 255, 255, 0.45);
-  --muted-3: rgba(255, 255, 255, 0.3);
-  --muted-4: rgba(255, 255, 255, 0.18);
+  --muted-1: rgba(255, 255, 255, 0.82);
+  --muted-2: rgba(255, 255, 255, 0.6);
+  --muted-3: rgba(255, 255, 255, 0.46);
+  --muted-4: rgba(255, 255, 255, 0.34);
   --fill: rgba(255, 255, 255, 0.05);
 }
 
@@ -20,6 +21,7 @@
   /* Warm luxury off-white. The muted ladder is intentionally HIGHER contrast
      than a naive invert of the dark values — sunlight readability was the
      complaint that motivated the light theme. */
+  color-scheme: light;
   --background: #faf9f7;
   --foreground: #141311;
   --surface: #ffffff;

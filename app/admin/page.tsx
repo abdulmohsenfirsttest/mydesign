@@ -38,10 +38,10 @@ export default function AdminPage() {
     <div className="p-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Admin Dashboard</h1>
-          <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Welcome back, Abdulmohsen</p>
+          <h1 className="text-3xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Admin Dashboard</h1>
+          <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Welcome back, Abdulmohsen</p>
         </div>
-        <Link href="/admin/clients" className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors"
+        <Link href="/admin/clients" className="px-5 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors"
           style={{ fontFamily: "var(--font-inter)" }}>+ New Client</Link>
       </div>
 
@@ -51,9 +51,9 @@ export default function AdminPage() {
           { label: "Total Clients", value: stats.clients },
           { label: "Bookings Today", value: bookings.length },
         ].map(s => (
-          <div key={s.label} className="border border-white/[0.08] bg-[#161616] p-5">
-            <p className="text-3xl text-white font-light mb-1" style={{ fontFamily: "var(--font-playfair)" }}>{s.value}</p>
-            <p className="text-white/50 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.label}</p>
+          <div key={s.label} className="border border-soft bg-surface p-5">
+            <p className="text-3xl text-foreground font-light mb-1" style={{ fontFamily: "var(--font-playfair)" }}>{s.value}</p>
+            <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -61,29 +61,29 @@ export default function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>ACTIVE PROJECTS</h2>
-            <Link href="/admin/projects" className="text-white/30 text-xs hover:text-white/60 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>View all →</Link>
+            <h2 className="text-foreground text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>ACTIVE PROJECTS</h2>
+            <Link href="/admin/projects" className="text-muted-2 text-xs hover:text-muted-1 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>View all →</Link>
           </div>
           {projects.length === 0 ? (
-            <div className="border border-white/[0.08] bg-[#161616] p-10 text-center">
-              <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No projects yet.</p>
+            <div className="border border-soft bg-surface p-10 text-center">
+              <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No projects yet.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {projects.map(p => (
-                <div key={p.id} className="border border-white/[0.08] bg-[#161616] p-5">
+                <div key={p.id} className="border border-soft bg-surface p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="text-white/80 text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{p.name}</p>
-                      <p className="text-white/30 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
+                      <p className="text-muted-1 text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{p.name}</p>
+                      <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>
                         {p.clients?.name ?? "—"} · {p.stage}
                       </p>
                     </div>
                   </div>
-                  <div className="h-px bg-white/[0.06]">
-                    <div className="h-px bg-white/40" style={{ width: `${p.progress}%` }} />
+                  <div className="h-px bg-fill">
+                    <div className="h-px bg-muted-1" style={{ width: `${p.progress}%` }} />
                   </div>
-                  <p className="text-white/20 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>{p.progress}% complete</p>
+                  <p className="text-muted-2 text-xs mt-1" style={{ fontFamily: "var(--font-inter)" }}>{p.progress}% complete</p>
                 </div>
               ))}
             </div>
@@ -92,23 +92,23 @@ export default function AdminPage() {
 
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-white text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TODAY&apos;S BOOKINGS</h2>
-            <Link href="/admin/bookings" className="text-white/30 text-xs hover:text-white/60 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>All →</Link>
+            <h2 className="text-foreground text-sm tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TODAY&apos;S BOOKINGS</h2>
+            <Link href="/admin/bookings" className="text-muted-2 text-xs hover:text-muted-1 transition-colors" style={{ fontFamily: "var(--font-inter)" }}>All →</Link>
           </div>
-          <div className="border border-white/[0.08] bg-[#161616]">
+          <div className="border border-soft bg-surface">
             {bookings.length === 0 ? (
-              <p className="px-5 py-6 text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No bookings today.</p>
+              <p className="px-5 py-6 text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>No bookings today.</p>
             ) : bookings.map((b, i) => (
-              <div key={b.id} className={`px-5 py-4 ${i < bookings.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
-                <p className="text-white text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{b.time}</p>
-                <p className="text-white/50 text-xs mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{b.name}</p>
-                <p className="text-white/25 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{b.service}</p>
+              <div key={b.id} className={`px-5 py-4 ${i < bookings.length - 1 ? "border-b border-soft" : ""}`}>
+                <p className="text-foreground text-sm mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{b.time}</p>
+                <p className="text-muted-2 text-xs mb-0.5" style={{ fontFamily: "var(--font-inter)" }}>{b.name}</p>
+                <p className="text-muted-2 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{b.service}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-6">
-            <h2 className="text-white text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>QUICK ACTIONS</h2>
+            <h2 className="text-foreground text-sm tracking-widest mb-4" style={{ fontFamily: "var(--font-inter)" }}>QUICK ACTIONS</h2>
             <div className="space-y-2">
               {[
                 { label: "Manage Clients", href: "/admin/clients" },
@@ -117,7 +117,7 @@ export default function AdminPage() {
                 { label: "Upload Files", href: "/admin/uploads" },
               ].map(a => (
                 <Link key={a.href} href={a.href}
-                  className="flex items-center justify-between px-4 py-3 border border-white/[0.08] text-white/40 text-xs hover:border-white/25 hover:text-white/70 transition-colors"
+                  className="flex items-center justify-between px-4 py-3 border border-soft text-muted-1 text-xs hover:border-border hover:text-muted-1 transition-colors"
                   style={{ fontFamily: "var(--font-inter)" }}>
                   {a.label}<span>→</span>
                 </Link>

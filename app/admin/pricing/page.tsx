@@ -78,11 +78,11 @@ export default function PricingPage() {
     fetchQuotes();
   }
 
-  if (authorized === null) return <div className="p-8"><p className="text-white/20 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p></div>;
+  if (authorized === null) return <div className="p-8"><p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Loading...</p></div>;
   if (!authorized) return (
     <div className="p-8">
-      <h1 className="text-3xl text-white mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Pricing</h1>
-      <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Only the Manager can set pricing.</p>
+      <h1 className="text-3xl text-foreground mb-2" style={{ fontFamily: "var(--font-playfair)" }}>Pricing</h1>
+      <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Only the Manager can set pricing.</p>
     </div>
   );
 
@@ -92,20 +92,20 @@ export default function PricingPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="text-3xl text-white mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Pricing</h1>
-        <p className="text-white/40 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Set and approve the internal price per sqm. Approving unlocks the designer&apos;s proposal step.</p>
+        <h1 className="text-3xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>Pricing</h1>
+        <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Set and approve the internal price per sqm. Approving unlocks the designer&apos;s proposal step.</p>
       </div>
 
       {error && <p className="text-red-400/70 text-xs mb-6" style={{ fontFamily: "var(--font-inter)" }}>{error}</p>}
 
       {quotes.length === 0 ? (
-        <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No pricing requests yet.</p>
+        <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>No pricing requests yet.</p>
       ) : (
         <div className="space-y-10">
           <div>
-            <p className="text-xs text-white/30 mb-4 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PENDING QUEUE</p>
+            <p className="text-xs text-muted-2 mb-4 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PENDING QUEUE</p>
             {pending.length === 0 ? (
-              <p className="text-white/25 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Nothing awaiting pricing.</p>
+              <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>Nothing awaiting pricing.</p>
             ) : (
               <div className="space-y-4">
                 {pending.map((q) => {
@@ -113,33 +113,33 @@ export default function PricingPage() {
                   const price = Number(priceInputs[q.id] || 0);
                   const liveTotal = sqm * price;
                   return (
-                    <div key={q.id} className="border border-white/[0.08] bg-[#161616] p-6">
+                    <div key={q.id} className="border border-soft bg-surface p-6">
                       <div className="flex flex-wrap items-start justify-between gap-6">
                         <div>
-                          <p className="text-white text-sm" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.clients?.name ?? "—"}</p>
-                          <p className="text-white/30 text-xs mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.name ?? "—"} · requested {fmtDate(q.created_at)}</p>
+                          <p className="text-foreground text-sm" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.clients?.name ?? "—"}</p>
+                          <p className="text-muted-2 text-xs mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.name ?? "—"} · requested {fmtDate(q.created_at)}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-white/30 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL AREA</p>
-                          <p className="text-white text-lg tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sqm.toLocaleString("en-US")} <span className="text-white/30 text-sm">sqm</span></p>
+                          <p className="text-xs text-muted-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL AREA</p>
+                          <p className="text-foreground text-lg tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sqm.toLocaleString("en-US")} <span className="text-muted-2 text-sm">sqm</span></p>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-end justify-between gap-6 mt-6 pt-6 border-t border-white/[0.06]">
+                      <div className="flex flex-wrap items-end justify-between gap-6 mt-6 pt-6 border-t border-soft">
                         <div className="w-48">
-                          <label className="block text-xs text-white/30 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Price per sqm (SAR)</label>
+                          <label className="block text-xs text-muted-2 mb-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>Price per sqm (SAR)</label>
                           <input type="number" min="0" inputMode="decimal" value={priceInputs[q.id] ?? ""}
                             onChange={(e) => setPriceInputs((p) => ({ ...p, [q.id]: e.target.value }))}
                             placeholder="0"
-                            className="w-full bg-transparent border border-white/15 text-white/80 text-xs px-3 py-2.5 focus:outline-none focus:border-white/40 placeholder-white/20"
+                            className="w-full bg-transparent border border-border text-muted-1 text-xs px-3 py-2.5 focus:outline-none focus:border-strong placeholder-muted-4"
                             style={{ fontFamily: "var(--font-inter)" }} />
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-white/30 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROJECT TOTAL</p>
-                          <p className="text-white text-xl tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(liveTotal)} <span className="text-white/30 text-sm">SAR</span></p>
+                          <p className="text-xs text-muted-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PROJECT TOTAL</p>
+                          <p className="text-foreground text-xl tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(liveTotal)} <span className="text-muted-2 text-sm">SAR</span></p>
                         </div>
                         <button onClick={() => approve(q)} disabled={approving === q.id}
-                          className="px-5 py-2.5 border border-white text-white text-xs tracking-widest hover:bg-white hover:text-black transition-colors disabled:opacity-40"
+                          className="px-5 py-2.5 border border-foreground text-foreground text-xs tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-40"
                           style={{ fontFamily: "var(--font-inter)" }}>{approving === q.id ? "Approving..." : "Approve"}</button>
                       </div>
                     </div>
@@ -151,26 +151,26 @@ export default function PricingPage() {
 
           {approved.length > 0 && (
             <div>
-              <p className="text-xs text-white/30 mb-4 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>APPROVED</p>
-              <div className="border border-white/[0.08] bg-[#161616]">
+              <p className="text-xs text-muted-2 mb-4 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>APPROVED</p>
+              <div className="border border-soft bg-surface">
                 {approved.map((q, i) => (
-                  <div key={q.id} className={`flex flex-wrap items-center justify-between gap-4 px-5 py-4 ${i < approved.length - 1 ? "border-b border-white/[0.06]" : ""}`}>
+                  <div key={q.id} className={`flex flex-wrap items-center justify-between gap-4 px-5 py-4 ${i < approved.length - 1 ? "border-b border-soft" : ""}`}>
                     <div className="min-w-[10rem]">
-                      <p className="text-white/80 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.name ?? "—"}</p>
-                      <p className="text-white/25 text-xs mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.clients?.name ?? "—"}{q.approved_at ? ` · approved ${fmtDate(q.approved_at)}` : ""}</p>
+                      <p className="text-muted-1 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.name ?? "—"}</p>
+                      <p className="text-muted-2 text-xs mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{q.projects?.clients?.name ?? "—"}{q.approved_at ? ` · approved ${fmtDate(q.approved_at)}` : ""}</p>
                     </div>
                     <div className="flex items-center gap-8 text-right">
                       <div>
-                        <p className="text-xs text-white/25 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>SQM</p>
-                        <p className="text-white/70 text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{Number(q.sqm_total).toLocaleString("en-US")}</p>
+                        <p className="text-xs text-muted-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>SQM</p>
+                        <p className="text-muted-1 text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{Number(q.sqm_total).toLocaleString("en-US")}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-white/25 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PER SQM</p>
-                        <p className="text-white/70 text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(Number(q.price_per_sqm))}</p>
+                        <p className="text-xs text-muted-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>PER SQM</p>
+                        <p className="text-muted-1 text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(Number(q.price_per_sqm))}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-white/25 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL</p>
-                        <p className="text-white text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(Number(q.total))} <span className="text-white/30">SAR</span></p>
+                        <p className="text-xs text-muted-2 tracking-widest" style={{ fontFamily: "var(--font-inter)" }}>TOTAL</p>
+                        <p className="text-foreground text-sm tabular-nums mt-0.5" style={{ fontFamily: "var(--font-inter)" }}>{sar(Number(q.total))} <span className="text-muted-2">SAR</span></p>
                       </div>
                     </div>
                   </div>
