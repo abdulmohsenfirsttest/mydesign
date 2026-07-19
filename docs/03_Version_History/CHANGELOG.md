@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.8.0 | 2026-07-19 | MINOR | **Light/dark display modes** (team request): semantic 12-token theme system; toggle in the marketing navbar + client dashboard sidebar, persisted, no flash-on-load; light = warm off-white with **higher-contrast** text (the sunlight-readability fix); photographic overlays stay dark in both modes; **admin panel deliberately stays dark**; owner-approved via Vercel branch preview before merge |
 | v4.7.1 | 2026-07-19 | PATCH | **Storage DELETE/UPDATE policies** (migration `0008`): the three buckets only ever had INSERT+SELECT, so the app's file-delete silently failed with a 400 and left orphaned objects; verified uploads themselves healthy end-to-end (live anon probe: storage 200, insert 201) — the team's "still can't upload" report reached zero requests server-side, pointing at stale browser tabs/cache, not the app |
 | v4.7.0 | 2026-07-13 | MINOR | **Testing-feedback UX**: the marketing navbar is now **session-aware** (shows "My Dashboard"/"Admin Panel" when logged in; already-logged-in visitors skip the login form) so returning users stop re-authenticating; and the **New Milestone form takes a deliverable** so a milestone can be created **Completed in one step** — "Completed" is greyed out with inline guidance until a file is attached (no more post-submit red wall) |
 | v4.6.1 | 2026-07-13 | PATCH | **Fix broken file uploads**: `public.files` had RLS enabled with no policy (out-of-band change) → uploads silently failed; re-disabled RLS to match every sibling table (migration `0007`), and the Upload page now surfaces any storage/insert error instead of swallowing it |
@@ -201,6 +202,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** migration `0008_storage_delete_update_policies.sql` (idempotent policy creation; no table changes).
 - **Decision:** PATCH — permissive-parity fix, same posture as INSERT/SELECT until Security Phase 2 replaces all bucket policies with scoped ones. Light/dark mode was **not** part of any deploy yet (team expectation gap) — it now begins on its own branch.
 
+### v4.8.0 · Light/dark display modes (marketing + client portal; admin stays dark)
+- **What:** The team's light-mode request, built as a real theme system rather than a bolt-on: `globals.css` now defines a **12-token semantic palette** (background/foreground/surface/surface-2/border-strong/border/border-soft/muted-1..4/fill) — dark is the default and matches the existing look; `[data-theme="light"]` switches to a **warm off-white (#faf9f7)** whose muted-text ladder is deliberately **higher-contrast** than a naive inversion (the direct-sunlight readability complaint). A **ThemeToggle** (sun/moon) sits in the marketing navbar and the client dashboard sidebar; choice persists to `localStorage` and an inline pre-paint script prevents any flash of the wrong theme. ~36 files across the marketing site, client portal (`app/dashboard/**`), and entry pages (`/book`, `/projects`, `/auth/*`) migrated from hardcoded `white/NN`-style utilities to the semantic tokens. **Photographic overlays** (hero + category scrims, text over photos, the homepage navbar while unscrolled over the hero) intentionally stay dark-scrim/white-text in both themes. **`app/admin/**` is untouched and stays dark** in both modes (opaque wrapper verified).
+- **Why:** team testing feedback — text was hard to read in direct sunlight; they asked for light and dark display modes. Owner scoped it to marketing + client portal (the surfaces read in sunlight), leaving the staff admin dark.
+- **Schema:** none — purely presentation. (The build surfaced an ops gap instead: the first-ever *preview* deployment failed with "supabaseUrl is required" because `NEXT_PUBLIC_SUPABASE_*` existed only for Production; both were added to the Preview environment scoped to the branch.)
+- **Decision:** MINOR, built per the guide on a **branch with a Vercel preview** reviewed by the owner before merge. Notable build lesson: in Tailwind v4, `border-soft`/`border-strong` utilities resolve via `--color-soft`/`--color-strong` — without those aliases in `@theme` the classes silently emit no CSS (caught in adversarial verify, fixed in `globals.css`).
+
 ---
 
 ## Version → commit map
@@ -231,6 +238,8 @@ v4.5.3  e958a65   (tag v4.5.3 — re-price after spaces change + revise a sent/a
 v4.6.0  1c474fc   (tag v4.6.0 — approving a price auto-fills the proposal; one-click Send)
 v4.6.1  5bb893d   (tag v4.6.1 — fix broken file uploads: files-table RLS restore + surface upload errors)
 v4.7.0  4422d09   (tag v4.7.0 — testing-feedback UX: session-aware navbar + one-step milestone deliverable)
+v4.7.1  465b6d0   (tag v4.7.1 — storage delete/update policies + upload-report verification)
+v4.8.0  <p8>   (tag v4.8.0 — light/dark display modes; admin stays dark)
 ```
 
-Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 5bb893d · v4.7.0 4422d09`
+Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 5bb893d · v4.7.0 4422d09 · v4.7.1 465b6d0 · v4.8.0 <p8>`
