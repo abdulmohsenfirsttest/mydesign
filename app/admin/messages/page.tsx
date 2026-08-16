@@ -121,6 +121,7 @@ export default function AdminProjectHub() {
 
   // Stage
   const [updatingStage, setUpdatingStage] = useState(false);
+  const [stageError, setStageError] = useState("");
   const [deletingProject, setDeletingProject] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -739,9 +740,11 @@ export default function AdminProjectHub() {
 
   async function updateStage(stage: string) {
     if (!selectedId) return;
+    setStageError("");
     setUpdatingStage(true);
     const progress = stageProgress[stage] ?? 0;
-    await supabase.from("projects").update({ stage, progress }).eq("id", selectedId);
+    const { error } = await supabase.from("projects").update({ stage, progress }).eq("id", selectedId);
+    if (error) { setStageError(error.message); setUpdatingStage(false); return; }
     setProjects(prev => prev.map(p => p.id === selectedId ? { ...p, stage, progress } : p));
     setUpdatingStage(false);
   }
@@ -791,11 +794,18 @@ export default function AdminProjectHub() {
                 <h2 className="text-2xl text-foreground mb-1" style={{ fontFamily: "var(--font-playfair)" }}>{selected.client_name}</h2>
                 <p className="text-muted-2 text-sm" style={{ fontFamily: "var(--font-inter)" }}>{selected.name}</p>
               </div>
-              <div className="flex-shrink-0 flex items-center gap-3">
-                <span className="text-muted-2 text-xs border border-border px-2.5 py-2" style={{ fontFamily: "var(--font-inter)" }}>{selected.stage ?? "Quotation"}</span>
-                <span className="text-muted-2 text-xs border border-soft px-2.5 py-2 tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>
-                  {selected.progress ?? stageProgress[selected.stage] ?? 0}%
-                </span>
+              <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
+                <div className="flex items-center gap-3">
+                  <select value={selected.stage ?? "Quotation"} onChange={e => updateStage(e.target.value)} disabled={updatingStage}
+                    className="bg-transparent text-muted-2 text-xs border border-border px-2.5 py-2 focus:outline-none focus:border-strong cursor-pointer disabled:opacity-40"
+                    style={{ fontFamily: "var(--font-inter)" }}>
+                    {stages.map(s => <option key={s} value={s} style={{ background: "var(--surface)" }}>{s}</option>)}
+                  </select>
+                  <span className="text-muted-2 text-xs border border-soft px-2.5 py-2 tabular-nums" style={{ fontFamily: "var(--font-inter)" }}>
+                    {selected.progress ?? stageProgress[selected.stage] ?? 0}%
+                  </span>
+                </div>
+                {stageError && <p className="text-red-400/70 text-xs" style={{ fontFamily: "var(--font-inter)" }}>{stageError}</p>}
               </div>
             </div>
 
