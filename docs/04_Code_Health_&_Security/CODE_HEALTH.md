@@ -117,7 +117,7 @@ A lighter-cadence mirror of the Favor Plus daily check, sized for a single-maint
 - `git status` — confirm the working tree is clean and `main` matches production. If there's uncommitted deployed work, that's the first thing to fix.
 - `next build` + `tsc --noEmit` — confirm both still pass.
 - `npm audit` and `npm outdated` — review new findings; apply only the safe bumps from section 1, hold majors, never `--force`.
-- **Backups:** confirm the nightly Supabase backup is current — `cat "$HOME/Google Drive/My Drive/mydesign/Backups/LATEST.txt"` (recent timestamp + row count) and `launchctl list | grep mydesign` (job loaded). See **BACKUPS.md**. Reminder: add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` before the RLS Phase-2 lockdown, or backups will miss rows.
+- **Backups:** confirm the nightly Supabase backup is current — resolve the Drive folder (`ls -d "$HOME"/Library/CloudStorage/GoogleDrive-*/"My Drive"/mydesign/Backups`), then check `LATEST.txt` shows a **recent** timestamp + row count, and `launchctl list | grep mydesign` (job loaded). A loaded job is *not* proof it ran — the 2026-07-07 outage went 18 days looking healthy. See **BACKUPS.md**. Reminder: add `SUPABASE_SERVICE_ROLE_KEY` to `.env.local` before the RLS Phase-2 lockdown, or backups will miss rows.
 - **Bug log:** make sure any production bug hit since the last check (and its fix) is recorded in **BUGLOG.md**.
 - Glance at the security roadmap (Phase 1 → 2 → 3 in the security doc) and the open items in the latest session record — re-date or close anything that's slipped.
 

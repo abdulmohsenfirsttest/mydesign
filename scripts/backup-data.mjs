@@ -16,9 +16,28 @@
 // restore.
 
 import { createClient } from '@supabase/supabase-js';
-import { readFileSync, mkdirSync, writeFileSync, readdirSync, rmSync } from 'fs';
+import { readFileSync, mkdirSync, writeFileSync, readdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+
+// Locate the Drive "mydesign" folder. The desktop app moved its mount from
+// ~/Google Drive to ~/Library/CloudStorage/GoogleDrive-<account> and left the
+// old path behind as an empty stub, which silently broke this backup for 18
+// days (2026-07-07 → 2026-07-25). Probe for the folder that actually exists.
+function findDriveRoot() {
+  const cloud = join(homedir(), 'Library', 'CloudStorage');
+  let accounts = [];
+  try {
+    accounts = readdirSync(cloud).filter((d) => d.startsWith('GoogleDrive-'));
+  } catch {
+    /* no CloudStorage dir — fall through to the legacy path */
+  }
+  const candidates = [
+    ...accounts.map((a) => join(cloud, a, 'My Drive', 'mydesign')),
+    join(homedir(), 'Google Drive', 'My Drive', 'mydesign'),
+  ];
+  return candidates.find(existsSync) || null;
+}
 
 function loadEnv() {
   const e = { ...process.env };
@@ -52,7 +71,15 @@ const db = createClient(BASE, KEY, { auth: { persistSession: false } });
 const stamp = new Date().toISOString().replace(/:/g, '-').replace(/\..+/, 'Z');
 // Default to the Google Drive "mydesign/Backups" folder so backups live on the
 // cloud AND on the Mac. Override with an arg or BACKUP_DIR.
-const root = process.argv[2] || env.BACKUP_DIR || join(homedir(), 'Google Drive', 'My Drive', 'mydesign', 'Backups');
+let root = process.argv[2] || env.BACKUP_DIR;
+if (!root) {
+  const drive = findDriveRoot();
+  if (!drive) {
+    console.error('No Google Drive "mydesign" folder found (checked ~/Library/CloudStorage/GoogleDrive-*/My Drive/mydesign and ~/Google Drive/My Drive/mydesign). Pass an output dir explicitly or set BACKUP_DIR.');
+    process.exit(1);
+  }
+  root = join(drive, 'Backups');
+}
 const outDir = join(root, stamp);
 mkdirSync(outDir, { recursive: true });
 

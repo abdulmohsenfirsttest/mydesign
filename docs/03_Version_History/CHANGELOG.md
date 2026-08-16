@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.9.1 | 2026-07-25 | PATCH | **Fix: nightly backups had been silently dead for 18 days.** Google Drive moved its mount (`~/Google Drive` → `~/Library/CloudStorage/GoogleDrive-<account>`) and left the old path as an empty stub; both backup scripts hardcoded it, and `mkdir -p` recreated a local folder Drive never synced. Both now **resolve the mount at runtime** and **abort loudly** rather than back up to a path nobody reads. Verified end-to-end via launchd. ⚠️ A second, unrelated failure (BUG-016, snapshots truncated to one table by `EDEADLK` on the Drive mount) is **still open** |
 | v4.9.0 | 2026-07-19 | MINOR | **Upload Files in the Project Hub + light/dark for the designer (admin) dashboard.** A per-project **Upload Files** tab in the hub (shared to the client's portal; drag/drop, error surfacing, file count, **"Sent <date, time>"** under each file). The **whole admin panel** now supports light/dark via the shared tokens, with a clearly-labeled **"Light mode / Dark mode"** button in the sidebar; **raised the dark muted-text contrast** floor for readability; native date/time pickers follow the theme |
 | v4.8.2 | 2026-07-19 | PATCH | **Fix: couldn't add/edit staff** — `admins` had RLS on with only a read policy, so the Staff & Permissions page failed with "new row violates row-level security policy for table admins." Added anon INSERT/UPDATE/DELETE policies (migration `0009`) so staff management works. ⚠️ Escalates security debt (public key can now write staff) — flagged in SECURITY.md; Security Phase 2 must move this server-side |
 | v4.8.1 | 2026-07-19 | PATCH | **Fix: couldn't sign in as owner with a leftover client session** (regression from v4.7.0). The login page force-redirected anyone with an existing session away from the form, so a stale *client* session bounced you to the client dashboard before you could enter owner credentials. Now it shows a non-blocking "already signed in — continue / or switch account" note and keeps the form usable; a fresh sign-in also clears any other-role session so it can't shadow the new one |
@@ -217,6 +218,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Schema:** none — `files.created_at` already existed; theming is presentation-only. (The `admins` write policies and storage delete policies from v4.8.2/v4.7.1 are the only recent DB changes.)
 - **Decision:** MINOR — a batch of related operator UX. Built on a **branch with a Vercel preview** reviewed by the owner before merge, per the guide's test-environment gate. The admin is the same `/admin` surface for all staff roles, so "designer dashboard" = the whole admin panel. UI/UX pass (contrast, tap targets, labeled control, empty/loading states) applied using the interface-design priority rules.
 
+### v4.9.1 · Fix: nightly backups silently dead for 18 days (BUG-015)
+- **What:** The Google Drive desktop app moved its mount from `~/Google Drive/My Drive` to `~/Library/CloudStorage/GoogleDrive-<account>/My Drive` and left the old location behind as an **empty stub directory**. `scripts/run-backup.sh` and `scripts/backup-data.mjs` both hardcoded the old path, and `mkdir -p` cheerfully recreated it on local disk — so the 2026-07-06 run wrote six tables into a folder Drive never synced, crashed on `manifest.json` (`ENOENT`), and the job then stopped producing output entirely. No snapshot existed between **2026-07-05** and **2026-07-25**; `launchctl list` showed the job loaded the whole time, so nothing surfaced it. Both scripts now **probe for whichever `My Drive/mydesign` actually exists** and **abort with a logged error** instead of writing a backup nobody will ever read. Docs updated: BACKUPS.md (dynamic verify commands + outage write-up), CODE_HEALTH.md (a loaded job is not proof it ran), BUGLOG BUG-015.
+- **Why:** discovered while auditing the Drive docs folder — `LATEST.txt` was 20 days stale.
+- **Schema:** none — tooling and documentation only; no app code touched.
+- **Decision:** PATCH under the v3.4.0 operational-backbone line. Fix the *class* of bug, not the instance: a cloud-synced destination is a moving target, so resolve it at runtime and fail loudly rather than hardcoding a new path that breaks the same way next time. Verified end-to-end by letting launchd fire the job itself (snapshot `2026-07-25T13-15-47Z`, `exit: 0`), not just a manual run.
+
 ---
 
 ## Version → commit map
@@ -252,6 +259,7 @@ v4.8.0  f352918   (tag v4.8.0 — light/dark display modes; admin stays dark)
 v4.8.1  c0d8d4d   (tag v4.8.1 — fix owner login trapped by a leftover client session)
 v4.8.2  a91c3eb   (tag v4.8.2 — fix staff management blocked by admins RLS)
 v4.9.0  da27b3b   (tag v4.9.0 — Upload Files tab + light/dark for the admin dashboard)
+v4.9.1  (pending) (tag v4.9.1 — fix backup Drive-mount path resolution; BUG-015)
 ```
 
 Compact form: `v1.0.0 5bed8f2 · v1.1.0 c5bcbe2 · v1.1.1 8c8315f · v2.0.0 4d010cc · v2.1.0 dd0e38f · v2.2.0 accaf55 · v2.2.1 1ebc525 · v3.0.0 8011ae3 · v3.1.0 9a952a0 · v3.1.1 3af643c · v3.2.0 7e3c7c8 · v3.3.0 7e3c7c8 · v3.4.0 08e9958 · v4.0.0 de19920 · v4.1.0 1df2d06 · v4.2.0 7fec31f · v4.3.0 2d7fc72 · v4.4.0 fe1c14c · v4.5.0 afaa7cd · v4.5.1 249675d · v4.5.2 d0e790c · v4.5.3 e958a65 · v4.6.0 1c474fc · v4.6.1 5bb893d · v4.7.0 4422d09 · v4.7.1 465b6d0 · v4.8.0 f352918 · v4.8.1 c0d8d4d · v4.8.2 a91c3eb · v4.9.0 da27b3b`
