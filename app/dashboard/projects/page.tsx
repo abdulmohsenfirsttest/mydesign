@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 type Project = { id: string; name: string; type: string; stage: string; progress: number; started: string; status: string };
 
-const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
+const stages = ["Quotation", "Mood Board", "2D", "3D", "Payment", "Delivery"];
 
 export default function ProjectsPage() {
   const router = useRouter();

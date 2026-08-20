@@ -7,7 +7,7 @@ type Project = { id: string; name: string; stage: string; progress: number; star
 type Client = { id: string; name: string };
 type Admin = { id: string; name: string; role: string };
 
-const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
+const stages = ["Quotation", "Mood Board", "2D", "3D", "Payment", "Delivery"];
 
 const MANAGEMENT_SERVICE = "Renovation Planning & Construction Management";
 const SERVICES: { group: string; track: "design" | "management"; items: string[] }[] = [

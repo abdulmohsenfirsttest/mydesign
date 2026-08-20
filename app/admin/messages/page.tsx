@@ -23,8 +23,8 @@ type HubFile = { id: string; name: string; size: string | null; url: string; cre
 type ProjectNote = { id: string; author_name: string | null; body: string; created_at: string };
 
 const meetingTypes = ["In-Person", "Video Call", "Phone Call", "Site Visit"];
-const stages = ["Quotation", "Mood Board", "2D", "3D", "Plans", "Payment", "Delivery"];
-const stageProgress: Record<string, number> = { "Quotation": 14, "Mood Board": 28, "2D": 42, "3D": 57, "Plans": 71, "Payment": 85, "Delivery": 100 };
+const stages = ["Quotation", "Mood Board", "2D", "3D", "Payment", "Delivery"];
+const stageProgress: Record<string, number> = { "Quotation": 14, "Mood Board": 28, "2D": 42, "3D": 57, "Payment": 85, "Delivery": 100 };
 const quoteTitles = ["Quotation", "Mood Board", "2D Plans", "3D Plans", "First Payment", "Second Payment", "Final Payment", "Delivery"];
 const milestoneStatuses = ["Upcoming", "In Progress", "Completed", "Skipped"];
 

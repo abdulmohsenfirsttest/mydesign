@@ -12,6 +12,7 @@ Ordering convention: the glance table below is **newest-first**; the detailed en
 
 | Version | Date | Type | Summary |
 |---------|------|------|---------|
+| v4.9.3 | 2026-08-20 | PATCH | **Removed "Plans" from the project stage pipeline** (owner request). The pipeline is now six stages: Quotation → Mood Board → 2D → 3D → Payment → Delivery. Removed from all three `stages` arrays (hub, admin projects, client portal) and from `stageProgress`. No project was on `Plans`, so no data migration was needed |
 | v4.9.2 | 2026-08-16 | PATCH | **Fix: a project's stage and progress could never change (BUG-017).** Reported by a designer — milestones marked Completed while the project sat at `Quotation` / `0%` everywhere. `updateStage()` had been fully written but **had no caller** since v4.3.0 removed its dropdown, and nothing links milestones to `projects`. The hub header's stage badge is now a **dropdown** wired to that function, and it **checks its write error** instead of assuming success |
 | v4.9.1 | 2026-07-25 | PATCH | **Fix: nightly backups had been silently dead for 18 days.** Google Drive moved its mount (`~/Google Drive` → `~/Library/CloudStorage/GoogleDrive-<account>`) and left the old path as an empty stub; both backup scripts hardcoded it, and `mkdir -p` recreated a local folder Drive never synced. Both now **resolve the mount at runtime** and **abort loudly** rather than back up to a path nobody reads. Verified end-to-end via launchd. ⚠️ A second, unrelated failure (BUG-016, snapshots truncated to one table by `EDEADLK` on the Drive mount) is **still open** |
 | v4.9.0 | 2026-07-19 | MINOR | **Upload Files in the Project Hub + light/dark for the designer (admin) dashboard.** A per-project **Upload Files** tab in the hub (shared to the client's portal; drag/drop, error surfacing, file count, **"Sent <date, time>"** under each file). The **whole admin panel** now supports light/dark via the shared tokens, with a clearly-labeled **"Light mode / Dark mode"** button in the sidebar; **raised the dark muted-text contrast** floor for readability; native date/time pickers follow the theme |
@@ -230,6 +231,12 @@ Each entry uses the same four-line format as the session record's "Versions ship
 - **Why:** designer report, 2026-08-16, on production with real client projects.
 - **Schema:** none — `stage`, `progress` and `stageProgress` all already existed. No migration.
 - **Decision:** PATCH — restores a control that v4.3.0 removed by accident; no new capability. Deliberately **did not** auto-derive stage from milestones: designers name milestones freely ("quotation", "Balconia Tower TownHouse 3D Design"), so they don't map onto the seven fixed stages. Deriving the **percentage** from completed-vs-total is the tractable half and is left as a follow-up, tracked in BUG-017.
+
+### v4.9.3 · Removed "Plans" from the stage pipeline
+- **What:** the stage dropdown added in v4.9.2 exposed all seven stages; the owner asked for **Plans** to be dropped. Removed from the three duplicated `stages` arrays — `app/admin/messages/page.tsx:26`, `app/admin/projects/page.tsx:10`, `app/dashboard/projects/page.tsx:9` — and from `stageProgress`. The pipeline is now **Quotation → Mood Board → 2D → 3D → Payment → Delivery**.
+- **Why:** owner request, 2026-08-20.
+- **Schema:** none. Verified against live data first: no project was on `Plans` and none had `progress = 71`, so nothing needed migrating.
+- **Decision:** PATCH — removes an option, adds nothing. The remaining percentages were left **unchanged** (14/28/42/57/85/100) rather than re-spaced across six stages, so no stored `progress` value drifts out of sync with its stage. The 57→85 step is now wider than the others; re-spacing to 17/33/50/67/83/100 is a deliberate follow-up, not a silent side effect. Note the stage list is still duplicated in three files — it should be one shared constant.
 
 ---
 
