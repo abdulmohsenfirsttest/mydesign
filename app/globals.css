@@ -59,11 +59,71 @@
   --font-sans: var(--font-inter);
 }
 
+/* ── Public brand site (v5.0.0) — cloned from mydesign.sa ──────────────────
+   A FIXED palette: the public site does not follow the light/dark toggle
+   (the Wix design deliberately mixes dark and cream sections). The portal
+   and admin keep using the semantic theme tokens above. Values were sampled
+   from the Wix section artwork. */
+:root {
+  --site-ink: #131412;       /* page background */
+  --site-ink-deep: #111210;  /* Process section */
+  --site-panel: #151614;     /* stat + logo panels */
+  --site-cream: #f3efe6;     /* text on dark, Capabilities bg, light buttons */
+  --site-olive: #555b47;     /* primary button, active filter */
+  --site-bronze: #ad8b63;    /* small accent labels */
+  --site-line: #3e3e3a;      /* hairlines on dark */
+  --site-line-cream: #b6b3ac; /* hairlines on cream */
+}
+
+@theme inline {
+  --color-site-ink: var(--site-ink);
+  --color-site-ink-deep: var(--site-ink-deep);
+  --color-site-panel: var(--site-panel);
+  --color-site-cream: var(--site-cream);
+  --color-site-olive: var(--site-olive);
+  --color-site-bronze: var(--site-bronze);
+  --color-site-line: var(--site-line);
+  --color-site-line-cream: var(--site-line-cream);
+  --font-display: var(--font-newsreader);   /* section headings (Wix artwork) */
+  --font-hero: var(--font-instrument-serif); /* hero line (live Wix text) */
+  --font-didone: var(--font-playfair);       /* Trust headings */
+  --font-body: var(--font-dm-sans);
+}
+
+/* The artwork's serif is Newsreader at its light (300) weight and default
+   optical size. The weight is set through variation settings so it holds even
+   where a heading also carries `font-normal` (which only sets font-weight). */
+@layer base {
+  .font-display {
+    font-variation-settings: "wght" 300;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
 }
 
 html {
-  scroll-behavior: smooth;
+  /* In-page anchors (Work, Process, …) land below the fixed header. */
+  scroll-padding-top: 88px;
+}
+
+/* Smooth in-page anchor jumps, except for visitors who ask for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Public pages (their <main> carries data-public-site) use the fixed dark
+   palette even when a visitor has a saved portal theme=light: dark scrollbars
+   and form controls, and an ink ground behind overscroll / rubber-banding. */
+html:has([data-public-site]) {
+  color-scheme: dark;
+  background: var(--site-ink);
+}
+html:has([data-public-site]) body {
+  background: var(--site-ink);
+  color: var(--site-cream);
 }

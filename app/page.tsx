@@ -1,27 +1,30 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import About from "./components/About";
-import Benefits from "./components/Benefits";
-import Services from "./components/Services";
-import Expertise from "./components/Expertise";
-import Testimonials from "./components/Testimonials";
-import Contact from "./components/Contact";
-import Footer from "./components/Footer";
+import SiteHeader from "./components/site/SiteHeader";
+import Hero from "./components/site/Hero";
+import FeaturedWork from "./components/site/FeaturedWork";
+import SelectedWork from "./components/site/SelectedWork";
+import Process from "./components/site/Process";
+import Impact from "./components/site/Impact";
+import Capabilities from "./components/site/Capabilities";
+import Closing from "./components/site/Closing";
+import Trust from "./components/site/Trust";
+import SiteFooter from "./components/site/SiteFooter";
 
+// v5.0.0 public home page — sections in the Wix desktop order of mydesign.sa.
 export default function Home() {
   return (
     <>
-      <Navbar />
-      <main>
+      <SiteHeader />
+      <main data-public-site className="bg-site-ink">
         <Hero />
-        <About />
-        <Benefits />
-        <Services />
-        <Expertise />
-        <Testimonials />
-        <Contact />
+        <FeaturedWork />
+        <SelectedWork />
+        <Process />
+        <Impact />
+        <Capabilities />
+        <Closing />
+        <Trust />
       </main>
-      <Footer />
+      <SiteFooter />
     </>
   );
 }

@@ -3,7 +3,7 @@
 This `docs/` folder is the operating manual and written memory for **MyDesign**, a Riyadh-based design-&-build (interior design + construction) firm platform styled after mydesign.sa. It records what was built, why, in what order, and the current health of the system, so the project can be understood and continued from the documents alone.
 
 - **Owner / sole maintainer:** Abdulmohsen
-- **Repo:** `/Users/bsebsa/mydesign` — GitHub `abdulmohsenfirsttest/mydesign` (private)
+- **Repo:** `/Users/bsebsa/mydesign` — GitHub `abdulmohsenfirsttest/mydesign` (**public** — confirmed 2026-08-16; the docs said private)
 - **Live:** https://mydesign-blush.vercel.app (Vercel, auto-deploy on push to `main`; manual `vercel --prod`)
 - **Stack:** Next.js 16.2.7 (App Router, Turbopack), React 19.2.4, Tailwind CSS v4, TypeScript 5.9, Supabase JS v2.107
 
@@ -61,9 +61,9 @@ The folder is numbered so it reads in order: requirements → decisions → hist
 
 ## Current status
 
-- **Current version:** `v4.9.0` — **Upload Files tab in the Project Hub** (per-project, shared to the client portal, with "Sent <date, time>" per file) **+ light/dark across the whole designer/admin dashboard** (labeled Light/Dark button in the sidebar; raised dark contrast; theme-aware date pickers). On top of v4.8.1 (owner-login fix), v4.8.2 (staff-management/admins-RLS fix). Previously `v4.8.0` — **light/dark display modes** (semantic 12-token theme; toggle in marketing navbar + client dashboard sidebar; light = warm off-white with higher-contrast text for sunlight readability; photographic overlays stay dark; **admin deliberately stays dark**; owner-approved via Vercel branch preview). On top of v4.7.1 (storage delete/update policies, BUG-012), v4.7.0 (session-aware navbar + one-step milestone deliverable), v4.6.1 (file-upload RLS fix), v4.4.0→v4.6.0 (internal notes, customizable milestones, quotation PDF, approve-price-auto-fills-proposal), v4.2.0 permissions, and the v4.0.0 Meeting-3 workflow; enforcement still client-side, Security Phase 2 pending — ADR-0010.
-- **Last session record:** `SES-2026-012`
-- **Next session record:** `SES-2026-013`
+- **Current version:** `v5.0.0` — **new public website**: the mydesign.sa (Wix) front end rebuilt in the app (home, `/projects`, restyled `/book`); portal, staff dashboard and login unchanged; domain still on Wix. Before it: v4.9.3 (6-stage pipeline, Plans removed), v4.9.2 (stage select fix, BUG-017), v4.9.1 (backup mount fix), v4.9.0 (hub Upload Files + admin light/dark). Enforcement still client-side, Security Phase 2 pending — ADR-0010.
+- **Last session record:** `SES-2026-016`
+- **Next session record:** `SES-2026-017`
 
 ---
 
